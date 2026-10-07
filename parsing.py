@@ -141,6 +141,20 @@ class Zone:
     start: bool = False
     end: bool = False
 
+    @property
+    def entry_cost(self) -> int:
+        match self.type.value:
+            case "blocked":
+                raise ValueError("this zone is inaccessible")
+            case "restricted":
+                return 2
+            case "normal" | "priority":
+                return 1
+
+    @property
+    def is_priority(self) -> bool:
+        return self.type is ZoneType.PRIORITY
+
 
 @dataclass
 class Connection:
@@ -149,11 +163,19 @@ class Connection:
     zone_b: Zone
     capacity: int = 1
 
+    def other_zone(self, zone: Zone) -> Zone:
+        if zone is self.zone_a:
+            return self.zone_b
+        if zone is self.zone_b:
+            return self.zone_a
+        else:
+            raise ValueError(f"{zone.name} is not part of this link")
+
 
 class MapParser:
 
     def __init__(self) -> None:
-        self.nb_drones: int | None = None
+        self.nb_drones: int = 0
         self.zones: dict[str, Zone] = {}
         self.connections: list[Connection] = []
         self.start: Zone | None = None
@@ -161,18 +183,13 @@ class MapParser:
         self.links: set[frozenset[str]] = set()
 
     def parse(self, path: str) -> None:
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                for line_no, line in enumerate(f, start=1):
-                    stripped = line.strip()
-                    if stripped and not stripped.startswith("#"):
-                        print(f"line {line_no}: {line.rstrip()}")
-                        self._scan_line(line_no, stripped)
-            self._final_check()
-        except (FileNotFoundError, PermissionError):
-            print("Invalid file: inaccessible or inexistent")
-        except ParserError as p:
-            print(p)
+        with open(path, "r", encoding="utf-8") as f:
+            for line_no, line in enumerate(f, start=1):
+                stripped = line.strip()
+                if stripped and not stripped.startswith("#"):
+                    print(f"line {line_no}: {line.rstrip()}")
+                    self._scan_line(line_no, stripped)
+        self._final_check()
 
     def _scan_line(
             self,
@@ -382,6 +399,7 @@ class MapParser:
             self.zones[zone_a],
             self.zones[zone_b]
         )
+        print(f"{zone_a} is linked to : {connection.other_zone(self.zones[zone_a]).name}")
         for key, value in final_metadata.items():
             match key:
                 case "max_link_capacity":
@@ -407,7 +425,7 @@ class MapParser:
         self.connections.append(connection)
 
     def _final_check(self) -> None:
-        if self.start is None or self.end is None or self.nb_drones is None:
+        if self.start is None or self.end is None or self.nb_drones == 0:
             raise ParserError(0, "missing mandatory map component")
 
 
