@@ -1,6 +1,6 @@
 import sys
 from parsing import ParserError, MapParser
-from graph import Graph
+from graph import Graph, PathFinder
 
 
 def main() -> None:
@@ -32,6 +32,11 @@ def main() -> None:
             linked_name = [f"{connection.zone_a.name}-{connection.zone_b.name}"
                            for connection in linked]
             print(f"{zone.name}: {linked_name}")
+        print()
+        path = PathFinder(graph)
+        final = path.find_path()
+        final_name = [zone.name for zone in final]
+        print(final_name)
     except OSError as o:
         print(f"Unable to read map file: {o}", file=sys.stderr)
         sys.exit(1)

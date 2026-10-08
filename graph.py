@@ -1,5 +1,6 @@
 from parsing import Zone, Connection, ZoneType
 from collections.abc import Sequence
+import heapq
 
 
 class Graph:
@@ -34,4 +35,59 @@ class Graph:
         if zone is self.start or zone is self.end:
             return self.nb_drones
         return zone.capacity
+
+
+class PathFinder:
+    def __init__(self, graph: Graph) -> None:
+        self.graph = graph
+
+    def find_path(self) -> list[Zone] | None:
+        start = (0, 0, self.graph.start.name)
+        heap: list[tuple[int, int, str]] = [start]
+        done: set[str] = set()
+        best_cost: dict[str, tuple[int, int]] = {}
+        came_from: dict[str, str] = {}
+
+        while heap:
+            current = heapq.heappop(heap)
+            current_turns, priority, current_name = current
+            if current_name in done:
+                continue
+            done.add(current_name)
+            current_zone = self.graph.zones[current_name]
+            if current_zone is self.graph.end:
+                break
+            link = self.graph.connections_of(
+                current_zone
+            )
+            for connection in link:
+                other_end = connection.other_zone(current_zone)
+                neighbor_name = other_end.name
+                if neighbor_name in done or not self.graph.can_enter(other_end):
+                    continue
+                turns = current_turns + other_end.entry_cost
+                priority -= 1 if other_end.is_priority else 0
+                cost = (turns, priority)
+                if neighbor_name not in best_cost or best_cost[neighbor_name] > cost:
+                    best_cost[neighbor_name] = cost
+                    heapq.heappush(heap, (turns, priority, neighbor_name))
+                    came_from[neighbor_name] = current_name
+        if self.graph.end.name not in came_from:
+            return None
+        return self._final_path(came_from)
+
+    def _final_path(self, came_from: dict[str, str]) -> list[Zone]:
+        path: list[Zone] = []
+        name = self.graph.end.name
+        while name != self.graph.start.name:
+            path.append(self.graph.zones[name])
+            name = came_from[name]
+        path.append(self.graph.start)
+        path.reverse()
+        # print([zone.name for zone in path])
+        return path
+
+
+
+
 
