@@ -171,6 +171,10 @@ class Connection:
         else:
             raise ValueError(f"{zone.name} is not part of this link")
 
+    @property
+    def name(self) -> str:
+        return f"{self.zone_a}-{self.zone_b}"
+
 
 class MapParser:
 
