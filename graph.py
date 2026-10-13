@@ -36,6 +36,12 @@ class Graph:
             return self.nb_drones
         return zone.capacity
 
+    def connection_between(self, zone_a: Zone, zone_b: Zone) -> Connection:
+        for connection in self.connections_of(zone_a):
+            if connection.other_zone(zone_a) is zone_b:
+                return connection
+        raise ValueError(f"{zone_a.name} and {zone_b.name} are not connected")
+
 
 class PathFinder:
     def __init__(self, graph: Graph) -> None:
