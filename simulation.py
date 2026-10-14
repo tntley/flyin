@@ -93,7 +93,30 @@ class Simulation:
             if count > links[connection_name].capacity:
                 raise SimulationError(f"{connection_name} has exceeded the allowed quota")
 
+    def _apply(
+            self,
+            planned: list[tuple[Drone, Connection, Zone]]
+    ) -> str:
+        pairs: list[tuple[int, str]] = []
+        for drone_id, drone in self.drones.items():
+            if isinstance(drone.location, Transit):
+                drone.finish_transit()
+                if isinstance(drone.location, Zone):
+                    pairs.append((drone_id, drone.location.name))
+                else:
+                    raise SimulationError("Issue during transit")
+        for drone, link, destination in planned:
+            if destination.type is ZoneType.RESTRICTED:
+                drone.enter_transit()
+                if 
+
+
+
     def step(self, moves: dict[int, Connection]) -> str:
         planned = self._check_moves(moves)
         self._check_zone_capacity(planned)
         self._check_connection_capacity(planned)
+        result = ""
+        for drone, _, destination in planned:
+            result += f"{drone.name}-{destination.name} "
+        return result
