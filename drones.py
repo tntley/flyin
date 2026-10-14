@@ -31,7 +31,7 @@ class Drone:
     def move_location(self, link: Connection) -> None:
         if not isinstance(self.location, Zone):
             raise ValueError(f"Drone {self.name} is not in a zone")
-        if not self.location is link.zone_a or not self.location is not link.zone_b:
+        if self.location is not link.zone_a and self.location is not link.zone_b:
             raise ValueError(f"Drone {self.name} is currently not on either end of that link")
         self.location = link.other_zone(self.location)
 

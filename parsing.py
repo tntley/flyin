@@ -173,7 +173,7 @@ class Connection:
 
     @property
     def name(self) -> str:
-        return f"{self.zone_a}-{self.zone_b}"
+        return f"{self.zone_a.name}-{self.zone_b.name}"
 
 
 class MapParser:

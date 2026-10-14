@@ -44,7 +44,7 @@ class Simulation:
             if isinstance(drone.location, Transit):
                 raise SimulationError(f"{drone.name} is already in transit")
             if drone.location is not connection.zone_a and drone.location is not connection.zone_b:
-                raise SimulationError(f"{drone.name} cannot take that connection")
+                raise SimulationError(f"{drone.name} cannot take that connection right now")
 
             drone_destination = connection.other_zone(drone.location)
             if not self.graph.can_enter(drone_destination):
@@ -107,16 +107,24 @@ class Simulation:
                     raise SimulationError("Issue during transit")
         for drone, link, destination in planned:
             if destination.type is ZoneType.RESTRICTED:
-                drone.enter_transit()
-                if 
-
-
+                drone.enter_transit(link)
+                if isinstance(drone.location, Transit):
+                    pairs.append((drone.id, link.name))
+                else:
+                    raise SimulationError("Issue trying to engage transit")
+            else:
+                drone.move_location(link)
+                if drone.location is destination:
+                    pairs.append((drone.id, destination.name))
+                else:
+                    raise SimulationError("Issue during movement")
+        pairs.sort()
+        return " ".join(f"D{drone_id}-{name}" for drone_id, name in pairs)
 
     def step(self, moves: dict[int, Connection]) -> str:
         planned = self._check_moves(moves)
         self._check_zone_capacity(planned)
         self._check_connection_capacity(planned)
-        result = ""
-        for drone, _, destination in planned:
-            result += f"{drone.name}-{destination.name} "
+        result = self._apply(planned)
+        self.turn += 1
         return result

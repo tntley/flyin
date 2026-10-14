@@ -39,15 +39,25 @@ def main() -> None:
         # the following is a separated test for Simulation class
         print()
         simulation = Simulation(graph)
-        start = graph.zones["start"]
-        waypoint1 = graph.zones["waypoint1"]
-        waypoint2 = graph.zones["waypoint2"]
+        # start = graph.zones["start"]
+        # waypoint1 = graph.zones["waypoint1"]
+        # waypoint2 = graph.zones["waypoint2"]
+        # goal = graph.zones["goal"]
+        # moves = {1: graph.connection_between(start, waypoint1),
+        #          2: graph.connection_between(start, waypoint1)}
+        # print(simulation.step({}))
+        # print(simulation.step({1: graph.connection_between(start, waypoint1)}))
+        # print(simulation.step({1: graph.connection_between(start, waypoint1)}))
+
+        # Simulation test with the test.txt file and 1 drone
+        hub = graph.zones["hub"]
+        roof1 = graph.zones["roof1"]
+        roof2 = graph.zones["roof2"]
         goal = graph.zones["goal"]
-        moves = {1: graph.connection_between(start, waypoint1),
-                 2: graph.connection_between(start, waypoint1),
-                 3: graph.connection_between(waypoint2, goal)}
-        print(simulation.step({1: graph.connection_between(start, waypoint1)}))
-        print(simulation.step(moves))
+
+        print(simulation.step({1: graph.connection_between(hub, roof1)}))
+        print(simulation.step({}))
+        print(simulation.step({1: graph.connection_between(roof2, goal)}))
 
         # path = PathFinder(graph)
         # final = path.find_path()
