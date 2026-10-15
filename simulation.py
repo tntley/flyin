@@ -128,3 +128,14 @@ class Simulation:
         result = self._apply(planned)
         self.turn += 1
         return result
+
+    def run(
+            self,
+            moves_per_turn: list[dict[int, Connection]]
+    ) -> tuple[int, list[str]]:
+        result: list[str] = []
+        for turn in moves_per_turn:
+            result.append(self.step(turn))
+        if not self.all_delivered:
+            raise SimulationError("Some drones were not delivered")
+        return (self.turn, result)
