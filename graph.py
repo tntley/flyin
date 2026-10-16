@@ -72,11 +72,11 @@ class PathFinder:
                 if neighbor_name in done or not self.graph.can_enter(other_end):
                     continue
                 turns = current_turns + other_end.entry_cost
-                priority -= 1 if other_end.is_priority else 0
-                cost = (turns, priority)
+                new_priority = priority - (1 if other_end.is_priority else 0)
+                cost = (turns, new_priority)
                 if neighbor_name not in best_cost or best_cost[neighbor_name] > cost:
                     best_cost[neighbor_name] = cost
-                    heapq.heappush(heap, (turns, priority, neighbor_name))
+                    heapq.heappush(heap, (turns, new_priority, neighbor_name))
                     came_from[neighbor_name] = current_name
         if self.graph.end.name not in came_from:
             return None

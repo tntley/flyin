@@ -2,6 +2,7 @@ import sys
 from parsing import ParserError, MapParser, Connection
 from graph import Graph, PathFinder
 from simulation import SimulationError, Simulation
+from planner import ReservationTable, Planner
 
 
 def main() -> None:
@@ -39,34 +40,21 @@ def main() -> None:
         # the following is a separated test for Simulation class
         print()
         simulation = Simulation(graph)
-        start = graph.zones["start"]
-        waypoint1 = graph.zones["waypoint1"]
-        waypoint2 = graph.zones["waypoint2"]
-        goal = graph.zones["goal"]
-        moves = [
-            {1: graph.connection_between(start, waypoint1)},
-            {1: graph.connection_between(waypoint1, waypoint2),
-             2: graph.connection_between(start, waypoint1)},
-            {2: graph.connection_between(waypoint1, waypoint2)},
-            {1: graph.connection_between(waypoint2, goal)},
-            {2: graph.connection_between(waypoint2, goal)}
-        ]
-        result = simulation.run(moves)
-        print(f"Number of turn: {result[0]}")
-        for line in result[1]:
-            print(line)
-        # print(simulation.step({1: graph.connection_between(start, waypoint1)}))
-        # print(simulation.step({1: graph.connection_between(start, waypoint1)}))
+        test_simulation(graph, simulation)
 
-        # Simulation test with the test.txt file and 1 drone
-        # hub = graph.zones["hub"]
-        # roof1 = graph.zones["roof1"]
-        # roof2 = graph.zones["roof2"]
-        # goal = graph.zones["goal"]
+        # testing the planner
+        print()
+        planner = Planner(graph)
+        table = ReservationTable(graph)
+        options = planner._next_state(graph.zones["waypoint1"], 1, table)
+        for time, next_zone, link in options:
+            print(time, next_zone.name, link.name if link else "Wait")
+        table.book_zone(graph.zones["waypoint1"], 1)
+        print("manually booking waypoint1")
+        options = planner._next_state(graph.start, 0, table)
+        for time, next_zone, link in options:
+            print(time, next_zone.name, link.name if link else "Wait")
 
-        # print(simulation.step({1: graph.connection_between(hub, roof1)}))
-        # print(simulation.step({}))
-        # print(simulation.step({1: graph.connection_between(roof2, goal)}))
 
         # path = PathFinder(graph)
         # final = path.find_path()
@@ -84,6 +72,26 @@ def main() -> None:
     except SimulationError as s:
         print(s, file=sys.stderr)
         sys.exit(1)
+
+
+def test_simulation(graph: Graph, simulation: Simulation) -> None:
+    # the following is a separated test for Simulation class
+    start = graph.zones["start"]
+    waypoint1 = graph.zones["waypoint1"]
+    waypoint2 = graph.zones["waypoint2"]
+    goal = graph.zones["goal"]
+    moves = [
+        {1: graph.connection_between(start, waypoint1)},
+        {1: graph.connection_between(waypoint1, waypoint2),
+         2: graph.connection_between(start, waypoint1)},
+        {2: graph.connection_between(waypoint1, waypoint2)},
+        {1: graph.connection_between(waypoint2, goal)},
+        {2: graph.connection_between(waypoint2, goal)}
+    ]
+    result = simulation.run(moves)
+    print(f"Number of turn: {result[0]}")
+    for line in result[1]:
+        print(line)
 
 
 if __name__ == "__main__":
