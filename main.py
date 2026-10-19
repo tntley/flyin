@@ -46,14 +46,18 @@ def main() -> None:
         print()
         planner = Planner(graph)
         table = ReservationTable(graph)
-        options = planner._next_state(graph.zones["waypoint1"], 1, table)
-        for time, next_zone, link in options:
-            print(time, next_zone.name, link.name if link else "Wait")
-        table.book_zone(graph.zones["waypoint1"], 1)
-        print("manually booking waypoint1")
-        options = planner._next_state(graph.start, 0, table)
-        for time, next_zone, link in options:
-            print(time, next_zone.name, link.name if link else "Wait")
+        # options = planner._next_state(graph.zones["waypoint1"], 1, table)
+        # for time, next_zone, link in options:
+        #     print(time, next_zone.name, link.name if link else "Wait")
+        # table.book_zone(graph.zones["waypoint1"], 1)
+        # print("manually booking waypoint1")
+        # options = planner._next_state(graph.start, 0, table)
+        # for time, next_zone, link in options:
+        #     print(time, next_zone.name, link.name if link else "Wait")
+        plan = planner._find_route(table, 5)
+        for previous, zone, final, link in plan:
+            print(previous, zone.name, final, link.name if link else "Wait")
+
 
 
         # path = PathFinder(graph)
