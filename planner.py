@@ -4,6 +4,14 @@ from parsing import Zone, Connection, ZoneType
 import heapq
 
 
+class PlanningError(Exception):
+    def __init__(
+            self,
+            message: str
+    ) -> None:
+        self.message = message
+        super.__init__(f"Error during planning: {self.message}")
+
 class ReservationTable:
     def __init__(self, graph: Graph) -> None:
         self.graph = graph
@@ -137,13 +145,23 @@ class Planner:
         result.reverse()
         return result
 
-        for state in came_from:
-            if start_state in came_from[state]:
-                break
-            final_time, final_zone_name = state
-            previous_time, previous_zone_name = came_from[state]
-            link = came_from[state][1]
-            final_zone = self.graph.zones[final_zone_name]
-            result.append((final_time, final_zone, previous_time, link))
-        result.reverse()
-        return result
+    def plan(
+            self,
+            max_time: int
+    ) -> list[dict[int, Connection]]:
+        schedule: list[dict[int, Connection]] = []
+        table = ReservationTable(self.graph)
+        for drone_id in range(1, self.graph.nb_drones + 1):
+            route = self._find_route(table, max_time)
+            if route is None:
+                raise PlanningError(f"Drone no.{drone_id} couldn't secure a route")
+            for previous_t, final_z, final_t, link in route:
+                table.book_zone(final_z, final_t)
+                if link is not None:
+                    table.book_connection(link, previous_t + 1)
+                    table.book_zone(final_z, final_t)
+                    while len(schedule) <= previous_t:
+                        schedule.append({})
+                    schedule[previous_t][drone_id] = link
+        return schedule
+

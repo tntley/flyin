@@ -373,6 +373,8 @@ class MapParser:
                     except ValueError:
                         raise ParserError(line_no, "max drone should be an int")
                 case "color":
+                    if not isinstance(value, str):
+                        raise ParserError(line_no, "invalid color")
                     zone.color = value
                 case _:
                     raise ParserError(line_no, "unknown metadata")

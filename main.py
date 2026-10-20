@@ -2,7 +2,8 @@ import sys
 from parsing import ParserError, MapParser, Connection
 from graph import Graph, PathFinder
 from simulation import SimulationError, Simulation
-from planner import ReservationTable, Planner
+from planner import ReservationTable, Planner, PlanningError
+from terminal import TerminalColor
 
 
 def main() -> None:
@@ -16,11 +17,11 @@ def main() -> None:
     parser = MapParser()
     try:
         parser.parse(path)
-        for name, zone in parser.zones.items():
-            print(f"{name}: {zone}")
-        print()
-        for link in parser.connections:
-            print(link)
+        # for name, zone in parser.zones.items():
+        #     print(f"{name}: {zone}")
+        # print()
+        # for link in parser.connections:
+        #     print(link)
         graph = Graph(
             parser.zones,
             parser.connections,
@@ -28,24 +29,43 @@ def main() -> None:
             parser.end,
             parser.nb_drones
         )
-        print()
-        for zone in parser.zones.values():
-            linked = graph.connections_of(zone)
-            linked_name = [
-                connection.name for connection in linked]
-            print(f"{zone.name}: {linked_name}")
-        print()
-        print(graph.zones)
+        # print()
+        # for zone in parser.zones.values():
+        #     linked = graph.connections_of(zone)
+        #     linked_name = [
+        #         connection.name for connection in linked]
+        #     print(f"{zone.name}: {linked_name}")
+        # print()
+        # print(graph.zones)
 
         # the following is a separated test for Simulation class
-        print()
+        # print()
         simulation = Simulation(graph)
-        test_simulation(graph, simulation)
+        # test_simulation(graph, simulation)
 
         # testing the planner
         print()
         planner = Planner(graph)
-        table = ReservationTable(graph)
+        display = TerminalColor()
+        # table = ReservationTable(graph)
+
+        # testing the plan method with simulation
+        path = PathFinder(graph)
+        test_path = path.find_path()
+        if test_path is None:
+            raise ValueError("No route found")
+        max_time = (len(test_path) + graph.nb_drones) * 2
+        turns = planner.plan(max_time)
+        # for no, turn in enumerate(turns, start=1):
+        #     for drone_id, link in turn.items():
+        #         print(f"Turn {no}: D{drone_id} {link.name}")
+        result = simulation.run(turns, display.display_status)
+        print(f"Number of turn: {result[0]}")
+        for line in result[1]:
+            print(line)
+
+
+        # table.book_zone(graph.zones["waypoint1"], 1)
         # options = planner._next_state(graph.zones["waypoint1"], 1, table)
         # for time, next_zone, link in options:
         #     print(time, next_zone.name, link.name if link else "Wait")
@@ -54,9 +74,10 @@ def main() -> None:
         # options = planner._next_state(graph.start, 0, table)
         # for time, next_zone, link in options:
         #     print(time, next_zone.name, link.name if link else "Wait")
-        plan = planner._find_route(table, 5)
-        for previous, zone, final, link in plan:
-            print(previous, zone.name, final, link.name if link else "Wait")
+
+        # plan = planner._find_route(table, 5)
+        # for previous, zone, final, link in plan:
+        #     print(previous, zone.name, final, link.name if link else "Wait")
 
 
 
@@ -75,6 +96,9 @@ def main() -> None:
         sys.exit(1)
     except SimulationError as s:
         print(s, file=sys.stderr)
+        sys.exit(1)
+    except PlanningError as t:
+        print(t, file=sys.stderr)
         sys.exit(1)
 
 

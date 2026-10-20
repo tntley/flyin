@@ -2,6 +2,7 @@ from drones import Drone, Transit
 from parsing import Zone, Connection, ZoneType
 from graph import Graph
 from collections import Counter
+from collections.abc import Callable
 
 
 class SimulationError(Exception):
@@ -131,11 +132,16 @@ class Simulation:
 
     def run(
             self,
-            moves_per_turn: list[dict[int, Connection]]
+            moves_per_turn: list[dict[int, Connection]],
+            display: Callable[["Simulation"], None]
     ) -> tuple[int, list[str]]:
         result: list[str] = []
         for turn in moves_per_turn:
-            result.append(self.step(turn))
+            this_turn = self.step(turn)
+            result.append(this_turn)
+            print(f"Turn {self.turn}: {this_turn}")
+            display(self)
+            print()
         if not self.all_delivered:
             raise SimulationError("Some drones were not delivered")
         return (self.turn, result)
