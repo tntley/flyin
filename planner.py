@@ -75,7 +75,10 @@ class Planner:
                 if table.is_zone_free(destination, t + 2) and table.is_connection_free(link, t + 1):
                     options.append((t + 2, destination, link))
             else:
-                if table.is_zone_free(destination, t+1) and table.is_connection_free(link, t+1):
+                if (
+                    table.is_zone_free(destination, t+1)
+                    and table.is_connection_free(link, t+1)
+                ):
                     options.append((t + 1, destination, link))
         return options
 
@@ -129,7 +132,10 @@ class Planner:
     def _reconstruct_path(
             self,
             end_state: tuple[int, str],
-            came_from: dict[tuple[int, str], tuple[tuple[int, str], Connection | None]]
+            came_from: dict[
+                tuple[int, str],
+                tuple[tuple[int, str], Connection | None]
+            ]
     ) -> list[tuple[int, Zone, int, Connection | None]]:
         result: list[tuple[int, Zone, int, Connection | None]] = []
         start_state = (0, self.graph.start.name)
@@ -154,12 +160,12 @@ class Planner:
         for drone_id in range(1, self.graph.nb_drones + 1):
             route = self._find_route(table, max_time)
             if route is None:
-                raise PlanningError(f"Drone no.{drone_id} couldn't secure a route")
+                raise PlanningError(f"Drone no.{drone_id}"
+                                    " couldn't secure a route")
             for previous_t, final_z, final_t, link in route:
                 table.book_zone(final_z, final_t)
                 if link is not None:
                     table.book_connection(link, previous_t + 1)
-                    table.book_zone(final_z, final_t)
                     while len(schedule) <= previous_t:
                         schedule.append({})
                     schedule[previous_t][drone_id] = link

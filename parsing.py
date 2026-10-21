@@ -191,7 +191,7 @@ class MapParser:
             for line_no, line in enumerate(f, start=1):
                 stripped = line.strip()
                 if stripped and not stripped.startswith("#"):
-                    print(f"line {line_no}: {line.rstrip()}")
+                    # print(f"line {line_no}: {line.rstrip()}")
                     self._scan_line(line_no, stripped)
         self._final_check()
 
@@ -227,8 +227,8 @@ class MapParser:
         if len(body.split()) != expected_number:
             raise ParserError(line_no, f"line should be formatted as {message_content}")
         final_metadata = self._read_optional_metadata(line_no, metadata)
-        if final_metadata:
-            print(final_metadata)
+        # if final_metadata:
+        #     print(final_metadata)
         return (body.split(), final_metadata)
 
     @staticmethod
@@ -405,7 +405,7 @@ class MapParser:
             self.zones[zone_a],
             self.zones[zone_b]
         )
-        print(f"{zone_a} is linked to : {connection.other_zone(self.zones[zone_a]).name}")
+        # print(f"{zone_a} is linked to : {connection.other_zone(self.zones[zone_a]).name}")
         for key, value in final_metadata.items():
             match key:
                 case "max_link_capacity":

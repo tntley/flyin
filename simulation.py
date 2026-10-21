@@ -136,6 +136,9 @@ class Simulation:
             display: Callable[["Simulation"], None]
     ) -> tuple[int, list[str]]:
         result: list[str] = []
+        print(f"Turn {self.turn}:")
+        display(self)
+        print()
         for turn in moves_per_turn:
             this_turn = self.step(turn)
             result.append(this_turn)
