@@ -19,7 +19,18 @@ class TerminalColor:
     BOLD = "\033[1m"
 
     def _paint(self, color: str | None, full: bool, priority: bool, text : str) -> str:
-        if color in self.COLORS and sys.stdout.isatty() :
+        prefix = ""
+        if color in self.COLORS:
+            prefix += self.COLORS[color]
+        if full:
+            prefix += self.UNDERLINED
+        if priority:
+            prefix += self.BOLD
+        if not sys.stderr.isatty() or color not in self.COLORS:
+            return text
+        return prefix + text + self.RESET
+
+        if color in self.COLORS and sys.stderr.isatty():
             if full and priority:
                 return (self.UNDERLINED + self.BOLD + self.COLORS[color] + text + self.RESET)
             elif full:
@@ -56,15 +67,15 @@ class TerminalColor:
                 zone.color,
                 full,
                 priority,
-                f"{text:<{padding}}"), end="\t")
+                f"{text:<{padding}}"), file=sys.stderr, end="\t")
 
             if not simulation.graph.can_enter(zone):
-                print("Blocked")
+                print("Blocked", file=sys.stderr)
                 continue
-            print(f"{indicator:<7}", end="")
+            print(f"{indicator:<7}", end="", file=sys.stderr)
             list_drones = ", ".join(drones_here)
             second_padding = len(simulation.drones)*5
-            print(f"{list_drones:<{second_padding}}", end="")
+            print(f"{list_drones:<{second_padding}}", end="", file=sys.stderr)
             connections_of = simulation.graph.connections_of(zone)
             if zone is not simulation.graph.end:
                 # print(f"-> {', '.join(connection.other_zone(zone).name for connection in connections_of)}")
@@ -77,11 +88,11 @@ class TerminalColor:
                         destination.name
                     )
                     if i == len(connections_of) - 1:
-                        print(text)
+                        print(text, file=sys.stderr)
                     else:
-                        print(f"{text}, ", end="")
+                        print(f"{text}, ", end="", file=sys.stderr)
             else:
-                print()
+                print(file=sys.stderr)
 
         for transit in in_transit:
-            print("\t*", transit)
+            print("\t*", transit, file=sys.stderr)

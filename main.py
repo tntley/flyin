@@ -4,16 +4,32 @@ from graph import Graph, PathFinder
 from simulation import SimulationError, Simulation
 from planner import ReservationTable, Planner, PlanningError
 from terminal import TerminalColor
+import argparse
+
+
+def define_flag() -> argparse.Namespace:
+    flags = argparse.ArgumentParser(
+        description="Pathfinding for drones with constraints."
+    )
+    flags.add_argument(
+        "map_file",
+        help="Pathway to the map file to run."
+    )
+    flags.add_argument(
+        "--visual",
+        action="store_true",
+        help="Toggle the optional colored terminal output"
+    )
+    return flags.parse_args()
 
 
 def main() -> None:
     parameters = sys.argv
-    if len(parameters) != 2:
-        print(
-            "Usage: python3 main.py <path to map file>",
-            file=sys.stderr)
-        sys.exit(1)
-    path = parameters[1]
+
+    # checking for visual flag and map file in argparser
+    flags = define_flag()
+    visual: bool = flags.visual
+    path: str = flags.map_file
     parser = MapParser()
     try:
         parser.parse(path)
@@ -44,7 +60,6 @@ def main() -> None:
         # test_simulation(graph, simulation)
 
         # testing the planner
-        print()
         planner = Planner(graph)
         display = TerminalColor()
         # table = ReservationTable(graph)
@@ -59,7 +74,7 @@ def main() -> None:
         # for no, turn in enumerate(turns, start=1):
         #     for drone_id, link in turn.items():
         #         print(f"Turn {no}: D{drone_id} {link.name}")
-        result = simulation.run(turns, display.display_status)
+        result = simulation.run(visual, turns, display.display_status)
         print(f"Number of turn: {result[0]}")
         for line in result[1]:
             print(line)
