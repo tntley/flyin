@@ -1,9 +1,18 @@
+"""Display a colored terminal output as an alternative to graphical display."""
+
 from simulation import Simulation
 from drones import Transit
 from parsing import Zone, ZoneType
 import sys
 
+
 class TerminalColor:
+    """Put together a turn by turn colored simulation output.
+
+    Each drone's movements and each zone's state for each turned are
+    showed with the specified color for each zones. If the color is not
+    in store, the zone appears as default.
+    """
 
     COLORS = {
         "red": "\033[31m",
@@ -18,7 +27,26 @@ class TerminalColor:
     UNDERLINED = "\033[4m"
     BOLD = "\033[1m"
 
-    def _paint(self, color: str | None, full: bool, priority: bool, text : str) -> str:
+    def _paint(
+            self,
+            color: str | None,
+            full: bool,
+            priority: bool,
+            text: str
+    ) -> str:
+        """Apply color and other style to the zone name.
+
+        Parameters
+        ----------
+        color : str | None
+            Color from the map file metadata.
+        full : bool
+            The zone is at full capacity on this turn.
+        priority : bool
+            The zone is a priority one.
+        text : str
+            The zone name to be styled and displayed.
+        """
         prefix = ""
         if color in self.COLORS:
             prefix += self.COLORS[color]
@@ -30,19 +58,17 @@ class TerminalColor:
             return text
         return prefix + text + self.RESET
 
-        if color in self.COLORS and sys.stderr.isatty():
-            if full and priority:
-                return (self.UNDERLINED + self.BOLD + self.COLORS[color] + text + self.RESET)
-            elif full:
-                return self.UNDERLINED + self.COLORS[color] + text + self.RESET
-            elif priority:
-                return self.BOLD + self.COLORS[color] + text + self.RESET
-            return self.COLORS[color] + text + self.RESET
-        elif full:
-            return (self.UNDERLINED + text + self.RESET)
-        return text
-
     def display_status(self, simulation: Simulation) -> None:
+        """Print each zone's color, occupancy and neighbor to stderr.
+
+        Full zones are underlined, priority zones are bold, blocked zones
+        are marked as such, and drones in transit are listed at the end.
+
+        Parameters
+        ----------
+        simulation : Simulation
+            The simulation whose current state is shown.
+        """
         in_zone: dict[str, list[str]] = {}
         in_transit: list[str] = []
         for drone in simulation.drones.values():
@@ -54,14 +80,20 @@ class TerminalColor:
                         in_zone[drone.location.name] = []
                     in_zone[drone.location.name].append(drone.name)
 
-        padding = max(len(zone_name) for zone_name in simulation.graph.zones.keys()) + len(" (restricted)")
+        padding = max(
+            len(zone_name) for zone_name in simulation.graph.zones.keys()
+            ) + len(" (restricted)")
 
         for zone_name, zone in simulation.graph.zones.items():
             drones_here = in_zone.get(zone_name, [])
-            indicator = f"{len(drones_here)}/{simulation.graph.zone_capacity(zone)}"
-            full: bool = len(drones_here) == simulation.graph.zone_capacity(zone)
+            indicator = (f"{len(drones_here)}/"
+                         f"{simulation.graph.zone_capacity(zone)}")
+            full: bool = len(
+                drones_here) == simulation.graph.zone_capacity(zone)
             priority: bool = zone.is_priority
-            text = zone.name + (" (restricted)" if zone.type is ZoneType.RESTRICTED else "")
+            text = (
+                zone.name +
+                (" (restricted)" if zone.type is ZoneType.RESTRICTED else ""))
 
             print(self._paint(
                 zone.color,
@@ -78,7 +110,9 @@ class TerminalColor:
             print(f"{list_drones:<{second_padding}}", end="", file=sys.stderr)
             connections_of = simulation.graph.connections_of(zone)
             if zone is not simulation.graph.end:
-                # print(f"-> {', '.join(connection.other_zone(zone).name for connection in connections_of)}")
+                # print(
+                # f"-> {', '.join(connection.other_zone(zone).name
+                #  for connection in connections_of)}")
                 for i, link in enumerate(connections_of):
                     destination = link.other_zone(zone)
                     text = self._paint(

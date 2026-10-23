@@ -1,13 +1,22 @@
+"""Entry point: loads arguments from tty and instantiate everything."""
+
 import sys
-from parsing import ParserError, MapParser, Connection
+from parsing import ParserError, MapParser
 from graph import Graph, PathFinder
 from simulation import SimulationError, Simulation
-from planner import ReservationTable, Planner, PlanningError
+from planner import Planner, PlanningError
 from terminal import TerminalColor
 import argparse
 
 
 def define_flag() -> argparse.Namespace:
+    """Check for mandatory argument and optional flag.
+
+    Returns
+    -------
+    argparse.Namespace
+        A Namespace object containing the passed arguments.
+    """
     flags = argparse.ArgumentParser(
         description="Pathfinding for drones with constraints."
     )
@@ -24,20 +33,21 @@ def define_flag() -> argparse.Namespace:
 
 
 def main() -> None:
-    parameters = sys.argv
-
+    """Run the program from graph creation to simulation."""
     # checking for visual flag and map file in argparser
     flags = define_flag()
     visual: bool = flags.visual
-    path: str = flags.map_file
+    map_file: str = flags.map_file
     parser = MapParser()
     try:
-        parser.parse(path)
+        parser.parse(map_file)
         # for name, zone in parser.zones.items():
         #     print(f"{name}: {zone}")
         # print()
         # for link in parser.connections:
         #     print(link)
+        if parser.start is None or parser.end is None:
+            raise ParserError(0, "missing starting or ending zone")
         graph = Graph(
             parser.zones,
             parser.connections,
@@ -68,7 +78,7 @@ def main() -> None:
         path = PathFinder(graph)
         test_path = path.find_path()
         if test_path is None:
-            raise ValueError("No route found")
+            raise ValueError("No route found.")
         max_time = (len(test_path) + graph.nb_drones) * 2
         turns = planner.plan(max_time)
         # for no, turn in enumerate(turns, start=1):
@@ -78,7 +88,6 @@ def main() -> None:
         print(f"Number of turn: {result[0]}")
         for line in result[1]:
             print(line)
-
 
         # table.book_zone(graph.zones["waypoint1"], 1)
         # options = planner._next_state(graph.zones["waypoint1"], 1, table)
@@ -93,8 +102,6 @@ def main() -> None:
         # plan = planner._find_route(table, 5)
         # for previous, zone, final, link in plan:
         #     print(previous, zone.name, final, link.name if link else "Wait")
-
-
 
         # path = PathFinder(graph)
         # final = path.find_path()
@@ -117,26 +124,25 @@ def main() -> None:
         sys.exit(1)
 
 
-def test_simulation(graph: Graph, simulation: Simulation) -> None:
-    # the following is a separated test for Simulation class
-    start = graph.zones["start"]
-    waypoint1 = graph.zones["waypoint1"]
-    waypoint2 = graph.zones["waypoint2"]
-    goal = graph.zones["goal"]
-    moves = [
-        {1: graph.connection_between(start, waypoint1)},
-        {1: graph.connection_between(waypoint1, waypoint2),
-         2: graph.connection_between(start, waypoint1)},
-        {2: graph.connection_between(waypoint1, waypoint2)},
-        {1: graph.connection_between(waypoint2, goal)},
-        {2: graph.connection_between(waypoint2, goal)}
-    ]
-    result = simulation.run(moves)
-    print(f"Number of turn: {result[0]}")
-    for line in result[1]:
-        print(line)
+# def test_simulation(graph: Graph, simulation: Simulation) -> None:
+#     # the following is a separated test for Simulation class
+#     start = graph.zones["start"]
+#     waypoint1 = graph.zones["waypoint1"]
+#     waypoint2 = graph.zones["waypoint2"]
+#     goal = graph.zones["goal"]
+#     moves = [
+#         {1: graph.connection_between(start, waypoint1)},
+#         {1: graph.connection_between(waypoint1, waypoint2),
+#          2: graph.connection_between(start, waypoint1)},
+#         {2: graph.connection_between(waypoint1, waypoint2)},
+#         {1: graph.connection_between(waypoint2, goal)},
+#         {2: graph.connection_between(waypoint2, goal)}
+#     ]
+#     result = simulation.run(moves)
+#     print(f"Number of turn: {result[0]}")
+#     for line in result[1]:
+#         print(line)
 
 
 if __name__ == "__main__":
     main()
-

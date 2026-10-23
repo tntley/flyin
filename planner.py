@@ -1,3 +1,5 @@
+"""Plan the moves turn by turn by complying to all rules."""
+
 from collections import Counter
 from graph import Graph
 from parsing import Zone, Connection, ZoneType
@@ -5,15 +7,29 @@ import heapq
 
 
 class PlanningError(Exception):
+    """Error raised when the planning couldn't deliver a drone."""
+
     def __init__(
             self,
             message: str
     ) -> None:
-        self.message = message
-        super.__init__(f"Error during planning: {self.message}")
+        super().__init__(f"Error during planning: {message}")
+
 
 class ReservationTable:
+    """Record which zones and connections are occupied, and when.
+
+    A zone booked at time t holds the drone after t turns; a connection
+    booked at time t is used during turn t.
+
+    Parameters
+    ----------
+    graph : Graph
+        The map to plan upon.
+    """
+
     def __init__(self, graph: Graph) -> None:
+        """Create a clean ReservationTable object with no booking anywhere."""
         self.graph = graph
         self._zones: Counter[tuple[str, int]] = Counter()
         self._connections: Counter[tuple[str, int]] = Counter()
@@ -23,6 +39,20 @@ class ReservationTable:
             zone: Zone,
             t: int
     ) -> bool:
+        """Check whether one more drone can fit in the zone at time t.
+
+        Parameters
+        ----------
+        zone : Zone
+            The zone to check.
+        t : int
+            The turn after which to check the capacity.
+
+        Returns
+        -------
+        bool
+            True if the drone can fit in the zone at time t.
+        """
         occupancy = self._zones[(zone.name, t)]
         capacity = self.graph.zone_capacity(zone)
         return occupancy < capacity
@@ -32,6 +62,20 @@ class ReservationTable:
             link: Connection,
             t: int
     ) -> bool:
+        """Check whether one more drone can pass a connection at time t.
+
+        Parameters
+        ----------
+        link : Connection
+            The connection to check.
+        t : int
+            The turn after which to check the capacity.
+
+        Returns
+        -------
+        bool
+            True if the drone can pass that connection at time t.
+        """
         occupancy = self._connections[(link.name, t)]
         capacity = link.capacity
         return occupancy < capacity
@@ -41,6 +85,7 @@ class ReservationTable:
             zone: Zone,
             t: int
     ) -> None:
+        """Reserve one place in the zone at time t."""
         self._zones[(zone.name, t)] += 1
 
     def book_connection(
@@ -48,10 +93,23 @@ class ReservationTable:
             link: Connection,
             t: int
     ) -> None:
+        """Reserve one place on the connection during turn t."""
         self._connections[(link.name, t)] += 1
 
 
 class Planner:
+    """Plan the drones movement turn by turn, one by one.
+
+    Each drone's moves for each turn are planned around the earlier drones'
+    reservation. If its preferred destination is booked at time t, it can
+    wait or take another route.
+
+    Parameters
+    ----------
+    graph : Graph
+        The map to plan upon.
+    """
+
     def __init__(
             self,
             graph: Graph,
@@ -64,6 +122,23 @@ class Planner:
             t: int,
             table: ReservationTable
     ) -> list[tuple[int, Zone, Connection | None]]:
+        """List every legal next state for a drone in `zone` at time t.
+
+        Parameters
+        ----------
+        zone : Zone
+            The drone's current location.
+        t : int
+            The current time.
+        table : ReservationTable
+            The bookings made by earlier drones to plan around.
+
+        Returns
+        -------
+        list[tuple[int, Zone, Connection | None]]
+            (arrival time, zone, connection used) for each option;
+            the connection is None for waiting.
+        """
         options: list[tuple[int, Zone, Connection | None]] = []
         if table.is_zone_free(zone, t + 1):
             options.append((t + 1, zone, None))
@@ -72,7 +147,10 @@ class Planner:
             if not self.graph.can_enter(destination):
                 continue
             if destination.type is ZoneType.RESTRICTED:
-                if table.is_zone_free(destination, t + 2) and table.is_connection_free(link, t + 1):
+                if (
+                    table.is_zone_free(destination, t + 2)
+                    and table.is_connection_free(link, t + 1)
+                ):
                     options.append((t + 2, destination, link))
             else:
                 if (
@@ -86,7 +164,23 @@ class Planner:
             self,
             table: ReservationTable,
             max_time: int
-    ) -> list[tuple[int, Zone, int, Connection | None]]:
+    ) -> list[tuple[int, Zone, int, Connection | None]] | None:
+        """Find the earliest route to goal based on the bookings.
+
+        Parameters
+        ----------
+        table : ReservationTable
+            The bookings made by earlier drones.
+        max_time : int
+            Supposed max turns for a drone to reach the goal. States after
+            this are not considered anymore.
+
+        Returns
+        -------
+        list[tuple[int, Zone, int, Connection | None]] or None
+            The route's steps as (start time, zone, end time, connection),
+            or None if no route ends within max_time.
+        """
         start = (0, 0, self.graph.start.name)
         heap: list[tuple[int, int, str]] = [start]
         done: set[tuple[int, str]] = set()
@@ -137,6 +231,21 @@ class Planner:
                 tuple[tuple[int, str], Connection | None]
             ]
     ) -> list[tuple[int, Zone, int, Connection | None]]:
+        """Rebuild a route by followind previous zones back to the start.
+
+        Parameters
+        ----------
+        end_state : tuple[int, str]
+            The (time, zone name) state mathing the end.
+        came_from : dict[tuple[int, str], tuple[tuple[int, str], Connection |
+        None]]
+            Maps each state to its previous state with the used link.
+
+        Returns
+        -------
+        list[tuple[int, Zone, int, Connection | None]]
+            The route's steps as (start time, zone, end time, connection)
+        """
         result: list[tuple[int, Zone, int, Connection | None]] = []
         start_state = (0, self.graph.start.name)
         current_state = end_state
@@ -155,6 +264,18 @@ class Planner:
             self,
             max_time: int
     ) -> list[dict[int, Connection]]:
+        """Plan the moves per turn for each drone and return them.
+
+        Parameters
+        ----------
+        max_time : int
+            Time limit for each drone to secure a valid route.
+
+        Returns
+        -------
+        list[dict[int, Connection]]
+            One move dictionnary per turn, will be passed to Simulation.run.
+        """
         schedule: list[dict[int, Connection]] = []
         table = ReservationTable(self.graph)
         for drone_id in range(1, self.graph.nb_drones + 1):
@@ -170,4 +291,3 @@ class Planner:
                         schedule.append({})
                     schedule[previous_t][drone_id] = link
         return schedule
-
