@@ -20,7 +20,8 @@ class TerminalColor:
         "yellow": "\033[33m",
         "green": "\033[32m",
         "blue": "\033[34m",
-        "purple": "\033[38;5;63m"
+        "purple": "\033[38;5;63m",
+        "pink": "\033[38;5;211m"
     }
 
     RESET = "\033[0m"
@@ -54,7 +55,7 @@ class TerminalColor:
             prefix += self.UNDERLINED
         if priority:
             prefix += self.BOLD
-        if not sys.stderr.isatty() or color not in self.COLORS:
+        if not sys.stderr.isatty() or (color not in self.COLORS and not prefix):
             return text
         return prefix + text + self.RESET
 
