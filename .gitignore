@@ -1,4 +1,4 @@
 __pycache__/
-__mypy.cache__/
+.mypy_cache/
 .venv
 result.txt
