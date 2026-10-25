@@ -518,8 +518,8 @@ class MapParser:
             self.zones[zone_a],
             self.zones[zone_b]
         )
-        print(f"{zone_a} is linked to :"
-              f" {connection.other_zone(self.zones[zone_a]).name}")
+        # print(f"{zone_a} is linked to :"
+        #       f" {connection.other_zone(self.zones[zone_a]).name}")
         for key, value in final_metadata.items():
             match key:
                 case "max_link_capacity":

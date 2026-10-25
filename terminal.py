@@ -55,7 +55,10 @@ class TerminalColor:
             prefix += self.UNDERLINED
         if priority:
             prefix += self.BOLD
-        if not sys.stderr.isatty() or (color not in self.COLORS and not prefix):
+        if (
+            not sys.stderr.isatty()
+            or (color not in self.COLORS and not prefix)
+        ):
             return text
         return prefix + text + self.RESET
 
