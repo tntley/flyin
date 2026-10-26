@@ -85,7 +85,7 @@ def main() -> None:
         #     for drone_id, link in turn.items():
         #         print(f"Turn {no}: D{drone_id} {link.name}")
         result = simulation.run(visual, turns, display.display_status)
-        print(f"Number of turn: {result[0]}")
+        # print(f"Number of turn: {result[0]}")
         for line in result[1]:
             print(line)
 
