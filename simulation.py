@@ -154,6 +154,16 @@ class Simulation:
         pairs.sort()
         return " ".join(f"D{drone_id}-{name}" for drone_id, name in pairs)
 
+    def snapshot(self) -> dict[int, Zone | Connection]:
+        """Return each drone's current location"""
+        result: dict[int, Zone | Connection] = {}
+        for id, drone in self.drones.items():
+            if isinstance(drone.location, Transit):
+                result[id] = drone.location.connection
+            else:
+                result[id] = drone.location
+        return result
+
     def step(self, moves: dict[int, Connection]) -> str:
         """Check moves legality, zone and connection capacity on one turn."""
         planned = self._check_moves(moves)
@@ -167,7 +177,8 @@ class Simulation:
             self,
             visual: bool,
             moves_per_turn: list[dict[int, Connection]],
-            display: Callable[["Simulation"], None]
+            display: Callable[["Simulation"], None],
+            snapshots: list[dict[int, Zone | Connection]]
     ) -> tuple[int, list[str]]:
         """Play a whole plan and check if all drones are delivered.
 
@@ -195,6 +206,7 @@ class Simulation:
             print(file=sys.stderr)
         for turn in moves_per_turn:
             this_turn = self.step(turn)
+            snapshots.append(self.snapshot())
             result.append(this_turn)
             if visual:
                 print(f"Turn {self.turn}: {this_turn}", file=sys.stderr)

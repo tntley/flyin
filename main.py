@@ -6,6 +6,7 @@ from graph import Graph, PathFinder
 from simulation import SimulationError, Simulation
 from planner import Planner, PlanningError
 from terminal import TerminalColor
+from parsing import Zone, Connection
 import argparse
 
 
@@ -84,10 +85,13 @@ def main() -> None:
         # for no, turn in enumerate(turns, start=1):
         #     for drone_id, link in turn.items():
         #         print(f"Turn {no}: D{drone_id} {link.name}")
-        result = simulation.run(visual, turns, display.display_status)
+        snapshots: list[dict[int, Zone | Connection]] = [simulation.snapshot()]
+        result = simulation.run(visual, turns, display.display_status, snapshots)
         # print(f"Number of turn: {result[0]}")
         for line in result[1]:
             print(line)
+        for key, value in snapshots[6].items():
+            print(f"D{key} is on {value.name}")
 
         # table.book_zone(graph.zones["waypoint1"], 1)
         # options = planner._next_state(graph.zones["waypoint1"], 1, table)
