@@ -179,9 +179,10 @@ class MapParser:
         """
         with open(path, "r", encoding="utf-8") as f:
             for line_no, line in enumerate(f, start=1):
-                stripped = line.strip()
+                considered = line.partition("#")[0]
+                stripped = considered.strip()
                 if stripped and not stripped.startswith("#"):
-                    # print(f"line {line_no}: {line.rstrip()}")
+                    print(f"line {line_no}: {stripped.rstrip()}")
                     self._scan_line(line_no, stripped)
         self._final_check()
 
@@ -553,8 +554,8 @@ if __name__ == "__main__":
     # parse_file()
     parser = MapParser()
     parser.parse("./maps/easy/01_linear_path.txt")
-    for name, zone in parser.zones.items():
-        print(f"{name}: {zone}")
-    print()
-    for link in parser.connections:
-        print(link)
+    # for name, zone in parser.zones.items():
+    #     print(f"{name}: {zone}")
+    # print()
+    # for link in parser.connections:
+    #     print(link)
