@@ -45,6 +45,7 @@ def main() -> None:
     snapshots: list[dict[int, Zone | Connection]] = [simulation.snapshot()]
     result = simulation.run(flags.visual, turns, terminal.display_status, snapshots)
 
+    drone_route = simulation.route
     running = True
     zone_pos = zone_position(graph, screen)
     current_turn = 0
@@ -57,9 +58,10 @@ def main() -> None:
                     sys.exit()
         screen.blit(background, (0, 0))
         display(zone_pos, graph, screen)
-        show_drones(snapshots[current_turn], screen, zone_pos)
+        if current_turn < len(drone_route):
+            show_drones(drone_route, current_turn, screen, zone_pos)
         pygame.display.flip()
-        clock.tick(1)
+        clock.tick(30)
         current_turn +=  1
     pygame.quit()
 
@@ -121,21 +123,35 @@ def display(
 
 
 def show_drones(
-        snapshots: dict[int, Zone | Connection],
+        drone_route: dict[int, list[str]],
+        current_turn: int,
         screen: pygame.Surface,
         zone_pos: dict[str, tuple[int, int]]
 ) -> None:
-    for id, loc in snapshots.items():
-        if isinstance(loc, Zone):
-            x, y = zone_pos[loc.name]
+    velocity = 10
+    for id in drone_route.keys():
+        loc_name = drone_route[id][current_turn]
+        if loc_name.find("-") == -1:
+            x, y = zone_pos[loc_name]
             pygame.draw.rect(
                 screen,
                 PINK,
-                (x,y,5,5)
+                (x,y,10,10)
             )
-        elif isinstance(loc, Connection):
-            x1, y1 = zone_pos[loc.zone_a.name]
-            x2, y2 = zone_pos[loc.zone_b.name]
+            destination_name = drone_route[id][current_turn + 1]
+            x2, y2 = zone_pos[destination_name]
+            while x <= x2 and y <= y2:
+                x += velocity
+                y += velocity
+                pygame.draw.rect(
+                    screen,
+                    PINK,
+                    (x,y,10,10)
+                )
+        else:
+            zone_a, zone_b = loc_name.split("-")
+            x1, y1 = zone_pos[zone_a]
+            x2, y2 = zone_pos[zone_b]
             x = (x1 + x2)/2
             y = (y1 + y2)/2
             pygame.draw.rect(

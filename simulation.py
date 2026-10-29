@@ -39,6 +39,9 @@ class Simulation:
             i: Drone(i, self.graph.start, self.graph.end)
             for i in range(1, self.graph.nb_drones + 1)
         }
+        self.route: dict[int, list[str]] = {
+            id: [self.graph.start.name] for id in self.drones.keys()
+        }
 
     @property
     def all_delivered(self) -> bool:
@@ -164,6 +167,13 @@ class Simulation:
                 result[id] = drone.location
         return result
 
+    def drone_route(self) -> None:
+        for id, drone in self.drones.items():
+            if isinstance(drone.location, Zone):
+                self.route[id].append(drone.location.name)
+            else:
+                self.route[id].append(drone.location.connection.name)
+
     def step(self, moves: dict[int, Connection]) -> str:
         """Check moves legality, zone and connection capacity on one turn."""
         planned = self._check_moves(moves)
@@ -207,6 +217,7 @@ class Simulation:
         for turn in moves_per_turn:
             this_turn = self.step(turn)
             snapshots.append(self.snapshot())
+            self.drone_route()
             result.append(this_turn)
             if visual:
                 print(f"Turn {self.turn}: {this_turn}", file=sys.stderr)
@@ -214,4 +225,5 @@ class Simulation:
                 print(file=sys.stderr)
         if not self.all_delivered:
             raise SimulationError("Some drones were not delivered")
+        print(self.route)
         return (self.turn, result)

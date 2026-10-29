@@ -90,8 +90,6 @@ def main() -> None:
         # print(f"Number of turn: {result[0]}")
         for line in result[1]:
             print(line)
-        for key, value in snapshots[6].items():
-            print(f"D{key} is on {value.name}")
 
         # table.book_zone(graph.zones["waypoint1"], 1)
         # options = planner._next_state(graph.zones["waypoint1"], 1, table)
