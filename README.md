@@ -161,7 +161,7 @@ For precision, the zone's color can be any valid single-word string. There is no
 
 The output is displayed as followed :
 
-![colored terminal output](image-1.png)
+![colored terminal output](colored_output_2.png)
 
 - Each section represents the states of each zone at every turn.
 
@@ -212,7 +212,7 @@ D4-goal D5-goal
 
 By adding the `--visual` flag, it would also output the colored lines :
 
-![colored terminal output](image.png)
+![colored terminal output](colored_output_1.png)
 
 
 ## Performance
