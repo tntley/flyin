@@ -248,3 +248,10 @@ The program was designed based on a set of map files provided at the start of th
 - ANSI escape code guide for colored terminal display:
     - https://jakob-bagterp.github.io/colorist-for-python/ansi-escape-codes/extended-256-colors/#structure
 
+### AI Use
+As AI takes more and more space in the field, it's become an almost inevitable assisting tool to learn new python concepts more efficiently. AI was used in the design processus of this program, primarly as an assisting learning tool, at different stage of the project:
+- Refining the roadmap to tackle the project in a more time-efficient way;
+- Used as a virtual python teacher to bring enlightnment on concepts like dataclasses, heapq, frozenset;
+- Used as an assisting tool to figure out bugs in my primar implementations of the parsing tool and the shortest path finding algorithm.
+
+
