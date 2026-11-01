@@ -147,3 +147,104 @@ For each turn, the `Simulation`:
 
 If all the checks pass, the planned moves are applied and the Simulation produces the output line. This means a turn is either applied completely or not at all.
 Ths Simulation is separated from the Planner and implements all the checks separately, so an incorrect plan is rejected with an error instead of producing a false solution.
+
+## Visual representation
+
+Due to time management issues, `colored terminal output` was choosen between the two possible options suggested by the initial subject on this matter, as opposed to a `graphical interface`.
+
+    The turn lines are colored by the destination zone's color when standard error is a terminal.
+
+For precision, the zone's color can be any valid single-word string. There is no fixed list of "allowed" colors, which would imply that any other colors outside said list would not be allowed and, thus, crash the program. However, because there's no way for the program to display the colors on the terminal if not told their ANSI escape codes, a list was build for this purpose only. **It is not an allowed colors list**, means every other colors outside the list would still pass, but since the program was not provided the ANSI escape code for that color, it will display the zone in the default terminal color (namely white).
+
+    The --visual flag tells the program to display the colored terminal output.
+        example : make run ARGS="maps/easy/01_linear_path.txt --visual"
+
+The output is displayed as followed :
+
+![colored terminal output](image-1.png)
+
+- Each section represents the states of each zone at every turn.
+
+- Each row shows the zone's name in its map color (if available), its occupancy against its maximum capacity, the drones occupying it, and its linked neighbors.
+
+- Full zones are underlined, priority zones are written in bold, and restricted zones are labeled as such. Blocked zones are marked.
+
+- Drones in transit are listed below the zones with the connection they are currently on.
+
+    Following the occupancy turn by turn shows where the drones queue and why a drone waits or takes a longer branch to reach the goal.
+
+- Colors (the ANSI escape codes) are automatically disabled when standard error is not a terminal, which means redirected output contains no escape codes.
+
+- As mentionned prior, unknown color names are shown without color rather than causing an error.
+
+## Complete example
+
+Let's consider as input the example map from the subject :
+
+```txt
+nb_drones: 5
+
+start_hub: hub 0 0 [color=green]
+end_hub: goal 10 10 [color=yellow]
+hub: roof1 3 4 [zone=restricted color=red]
+hub: roof2 6 2 [zone=normal color=blue]
+hub: corridorA 4 3 [zone=priority color=green max_drones=2]
+hub: tunnelB 7 4 [zone=normal color=red]
+hub: obstacleX 5 5 [zone=blocked color=gray]
+
+connection: hub-roof1
+connection: hub-corridorA
+connection: roof1-roof2
+connection: roof2-goal
+connection: corridorA-tunnelB [max_link_capacity=2]
+connection: tunnelB-goal
+```
+
+The required output of the command `python3 main.py map.txt` would be :
+
+```code
+D1-corridorA D3-hub-roof1
+D1-tunnelB D2-corridorA D3-roof1 D5-hub-roof1
+D1-goal D2-tunnelB D3-roof2 D4-corridorA D5-roof1
+D2-goal D3-goal D4-tunnelB D5-roof2
+D4-goal D5-goal
+```
+
+By adding the `--visual` flag, it would also output the colored lines :
+
+![colored terminal output](image.png)
+
+
+## Performance
+
+The program was designed based on a set of map files provided at the start of the subject. For each map file complexity, an expected performance target was defined to mesure the optimization level of the implementation and its efficiency.
+
+|Map file|Drones|Target (<=)|Performance achieved|
+|:---:|:---:|:---:|:---:|
+|||**Easy maps**|
+|Linear path|2|6|5|
+|Simple fork|4|8|4|
+|Basic capacity|4|6|4|
+|||**Medium maps**|
+|Dead end trap|5|12|8|
+|Circular loop|6|15|10|
+|Priority puzzle|5|12|6|
+|||**Hard maps**|
+|Maze nightmare|8|30|13|
+|Capacity hell|12|35|16|
+|Ultimate challenge|15|45|26|
+|||**Challenger map**|
+|The impossible dream|25|45|43|
+
+## Resources
+- Further learning about dataclasses in Python:
+    - https://docs.python.org/3/library/dataclasses.html
+    - https://medium.com/@laurentkubaski/python-data-classes-f98f8368f5c2
+- Understanding Djikstra's shortest path algorithm:
+    - https://www.codecademy.com/article/dijkstras-shortest-path-algorithm
+    - https://www.w3schools.com/dsa/dsa_algo_graphs_dijkstra.php
+    - https://www.geeksforgeeks.org/dsa/dijkstras-shortest-path-algorithm-greedy-algo-7/
+    - https://www.geeksforgeeks.org/dsa/time-and-space-complexity-of-dijkstras-algorithm/
+- ANSI escape code guide for colored terminal display:
+    - https://jakob-bagterp.github.io/colorist-for-python/ansi-escape-codes/extended-256-colors/#structure
+

@@ -182,7 +182,7 @@ class MapParser:
                 considered = line.partition("#")[0]
                 stripped = considered.strip()
                 if stripped and not stripped.startswith("#"):
-                    print(f"line {line_no}: {stripped.rstrip()}")
+                    # print(f"line {line_no}: {stripped.rstrip()}")
                     self._scan_line(line_no, stripped)
         self._final_check()
 
