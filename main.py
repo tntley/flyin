@@ -34,18 +34,13 @@ def define_flag() -> argparse.Namespace:
 
 def main() -> None:
     """Run the program from graph creation to simulation."""
-    # checking for visual flag and map file in argparser
     flags = define_flag()
     visual: bool = flags.visual
     map_file: str = flags.map_file
     parser = MapParser()
     try:
         parser.parse(map_file)
-        # for name, zone in parser.zones.items():
-        #     print(f"{name}: {zone}")
-        # print()
-        # for link in parser.connections:
-        #     print(link)
+
         if parser.start is None or parser.end is None:
             raise ParserError(0, "missing starting or ending zone")
         graph = Graph(
@@ -55,58 +50,22 @@ def main() -> None:
             parser.end,
             parser.nb_drones
         )
-        # print()
-        # for zone in parser.zones.values():
-        #     linked = graph.connections_of(zone)
-        #     linked_name = [
-        #         connection.name for connection in linked]
-        #     print(f"{zone.name}: {linked_name}")
-        # print()
-        # print(graph.zones)
 
-        # the following is a separated test for Simulation class
-        # print()
         simulation = Simulation(graph)
-        # test_simulation(graph, simulation)
 
-        # testing the planner
         planner = Planner(graph)
         display = TerminalColor()
-        # table = ReservationTable(graph)
 
-        # testing the plan method with simulation
         path = PathFinder(graph)
         test_path = path.find_path()
         if test_path is None:
             raise ValueError("No route found.")
         max_time = (len(test_path) + graph.nb_drones) * 2
         turns = planner.plan(max_time)
-        # for no, turn in enumerate(turns, start=1):
-        #     for drone_id, link in turn.items():
-        #         print(f"Turn {no}: D{drone_id} {link.name}")
+
         result = simulation.run(visual, turns, display.display_status)
-        # print(f"Number of turn: {result[0]}")
         for line in result[1]:
             print(line)
-
-        # table.book_zone(graph.zones["waypoint1"], 1)
-        # options = planner._next_state(graph.zones["waypoint1"], 1, table)
-        # for time, next_zone, link in options:
-        #     print(time, next_zone.name, link.name if link else "Wait")
-        # table.book_zone(graph.zones["waypoint1"], 1)
-        # print("manually booking waypoint1")
-        # options = planner._next_state(graph.start, 0, table)
-        # for time, next_zone, link in options:
-        #     print(time, next_zone.name, link.name if link else "Wait")
-
-        # plan = planner._find_route(table, 5)
-        # for previous, zone, final, link in plan:
-        #     print(previous, zone.name, final, link.name if link else "Wait")
-
-        # path = PathFinder(graph)
-        # final = path.find_path()
-        # final_name = [zone.name for zone in final]
-        # print(final_name)
     except OSError as o:
         print(f"Unable to read map file: {o}", file=sys.stderr)
         sys.exit(1)
@@ -122,26 +81,6 @@ def main() -> None:
     except PlanningError as t:
         print(t, file=sys.stderr)
         sys.exit(1)
-
-
-# def test_simulation(graph: Graph, simulation: Simulation) -> None:
-#     # the following is a separated test for Simulation class
-#     start = graph.zones["start"]
-#     waypoint1 = graph.zones["waypoint1"]
-#     waypoint2 = graph.zones["waypoint2"]
-#     goal = graph.zones["goal"]
-#     moves = [
-#         {1: graph.connection_between(start, waypoint1)},
-#         {1: graph.connection_between(waypoint1, waypoint2),
-#          2: graph.connection_between(start, waypoint1)},
-#         {2: graph.connection_between(waypoint1, waypoint2)},
-#         {1: graph.connection_between(waypoint2, goal)},
-#         {2: graph.connection_between(waypoint2, goal)}
-#     ]
-#     result = simulation.run(moves)
-#     print(f"Number of turn: {result[0]}")
-#     for line in result[1]:
-#         print(line)
 
 
 if __name__ == "__main__":
