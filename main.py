@@ -7,6 +7,7 @@ from simulation import SimulationError, Simulation
 from planner import Planner, PlanningError
 from terminal import TerminalColor
 from parsing import Zone, Connection
+from visual import GraphicalDisplay
 import argparse
 
 
@@ -30,6 +31,11 @@ def define_flag() -> argparse.Namespace:
         action="store_true",
         help="Toggle the optional colored terminal output"
     )
+    flags.add_argument(
+        "--gui",
+        action="store_true",
+        help="Toggle the optional graphical user interface."
+    )
     return flags.parse_args()
 
 
@@ -38,6 +44,7 @@ def main() -> None:
     # checking for visual flag and map file in argparser
     flags = define_flag()
     visual: bool = flags.visual
+    gui: bool = flags.gui
     map_file: str = flags.map_file
     parser = MapParser()
     try:
@@ -90,6 +97,9 @@ def main() -> None:
         # print(f"Number of turn: {result[0]}")
         for line in result[1]:
             print(line)
+        if gui:
+            graphic = GraphicalDisplay(graph, snapshots)
+            graphic.run()
 
         # table.book_zone(graph.zones["waypoint1"], 1)
         # options = planner._next_state(graph.zones["waypoint1"], 1, table)
