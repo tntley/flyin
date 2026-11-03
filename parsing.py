@@ -182,7 +182,7 @@ class MapParser:
                 considered = line.partition("#")[0]
                 stripped = considered.strip()
                 if stripped and not stripped.startswith("#"):
-                    print(f"line {line_no}: {stripped.rstrip()}")
+                    # print(f"line {line_no}: {stripped.rstrip()}")
                     self._scan_line(line_no, stripped)
         self._final_check()
 
@@ -457,6 +457,7 @@ class MapParser:
         for key, value in metadata.items():
             match key:
                 case "zone":
+                    # if not zone.start and not zone.end:
                     try:
                         zone.type = ZoneType(value)
                     except ValueError:
@@ -465,6 +466,8 @@ class MapParser:
                 case "max_drones":
                     try:
                         converted = int(value)
+                        if zone.start or zone.end:
+                            continue
                         if converted <= 0:
                             raise ParserError(
                                 line_no,

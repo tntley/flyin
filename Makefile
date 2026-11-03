@@ -15,7 +15,7 @@ install:
 	$(PIP) install -r requirements.txt
 
 run:
-	$(PYTHON) main.py $(ARGS)
+	@$(PYTHON) main.py $(ARGS)
 
 debug:
 	$(PYTHON) -m pdb main.py $(ARGS)

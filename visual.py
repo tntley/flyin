@@ -1,5 +1,8 @@
+"""Graphical interface to visualize the drones routing on the graph."""
+
+import os
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 import pygame
-import sys
 
 from graph import Graph
 from parsing import Zone, Connection, ZoneType
@@ -14,10 +17,20 @@ TEXT = (235, 235, 235)
 DEFAULT_ZONE = (128, 128, 128)
 PRIORITY = (34, 139, 34)
 RESTRICTED = (255, 165, 0)
+BLOCKED = (255, 0, 0)
 DRONE = (255, 192, 203)
 
 
 class GraphicalDisplay:
+    """Window displaying recorded snapshots of the drones at each turn.
+
+    Attributes
+    ----------
+    graph: Graph
+        The network to be displayed.
+    snapshots: list[Snapshot]
+        Each drones location after 0, 1, 2... turns
+    """
 
     MARGIN = 80
     ZONE_RADIUS = 20
@@ -29,11 +42,12 @@ class GraphicalDisplay:
             graph: Graph,
             snapshots: list[Snapshot]
     ) -> None:
+        """Open the window, initialize pygame and every constant."""
         pygame.init()
 
         self.screen = pygame.display.set_mode((1500, 800))
         pygame.display.set_caption("Fly-in")
-        self.background = pygame.image.load("background.png")
+        self.background = pygame.image.load("assets/background.png")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 30)
 
@@ -45,9 +59,10 @@ class GraphicalDisplay:
             name: self._extract_color(zone.color)
             for name, zone in graph.zones.items()
         }
-        self.drone_image = self._load_drone_image("drone.png")
+        self.drone_image = self._load_drone_image("assets/drone.png")
 
     def _compute_zone_positions(self) -> dict[str, Point]:
+        """Define the zone's coordinate inside the window."""
         zones = self.graph.zones.values()
         min_x = min(zone.x for zone in zones)
         max_x = max(zone.x for zone in zones)
@@ -68,7 +83,7 @@ class GraphicalDisplay:
         offset_x = self.MARGIN + (available_width - used_width) / 2
         offset_y = self.MARGIN + (available_height - used_height) / 2
 
-        return({
+        return ({
             zone.name: (
                 offset_x + (zone.x - min_x) * scale,
                 offset_y + used_height - (zone.y - min_y) * scale
@@ -96,7 +111,7 @@ class GraphicalDisplay:
         return pygame.transform.smoothscale(image, size)
 
     def _location_pos(self, location: Location) -> Point:
-        """Center of a zone, or middle of a connection"""
+        """Center of a zone, or middle of a connection."""
         if isinstance(location, Zone):
             return self.zone_pos.get(location.name)
         x1, y1 = self.zone_pos.get(location.zone_a.name)
@@ -159,6 +174,14 @@ class GraphicalDisplay:
                 pygame.draw.circle(
                     self.screen,
                     RESTRICTED,
+                    center,
+                    self.ZONE_RADIUS + 10,
+                    5
+                )
+            if zone.type is ZoneType.BLOCKED:
+                pygame.draw.circle(
+                    self.screen,
+                    BLOCKED,
                     center,
                     self.ZONE_RADIUS + 10,
                     5
