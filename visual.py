@@ -1,9 +1,6 @@
 """Graphical interface to visualize the drones routing on the graph."""
 
-import os
-os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 import pygame
-
 from graph import Graph
 from parsing import Zone, Connection, ZoneType
 
@@ -14,6 +11,7 @@ Point = tuple[float, float]
 BACKGROUND = (25, 25, 35)
 LINE = (200, 200, 200)
 TEXT = (235, 235, 235)
+CAPACITY = (255, 105, 180)
 DEFAULT_ZONE = (128, 128, 128)
 PRIORITY = (34, 139, 34)
 RESTRICTED = (255, 165, 0)
@@ -113,9 +111,9 @@ class GraphicalDisplay:
     def _location_pos(self, location: Location) -> Point:
         """Center of a zone, or middle of a connection."""
         if isinstance(location, Zone):
-            return self.zone_pos.get(location.name)
-        x1, y1 = self.zone_pos.get(location.zone_a.name)
-        x2, y2 = self.zone_pos.get(location.zone_b.name)
+            return self.zone_pos[location.name]
+        x1, y1 = self.zone_pos[location.zone_a.name]
+        x2, y2 = self.zone_pos[location.zone_b.name]
         return ((x2 + x1) / 2, (y2 + y1) / 2)
 
     def _drone_positions(self, snapshot: Snapshot) -> dict[int, Point]:
@@ -153,6 +151,15 @@ class GraphicalDisplay:
             start = self.zone_pos[link.zone_a.name]
             end = self.zone_pos[link.zone_b.name]
             pygame.draw.line(self.screen, LINE, start, end, 3)
+            capacity_label = self.font.render(
+                str(link.capacity), True, CAPACITY)
+            midpoint = ((start[0] + end[0])/2, (start[1] + end[1])/2)
+            self.screen.blit(
+                capacity_label,
+                capacity_label.get_rect(
+                    midtop=(midpoint[0], midpoint[1]+25)
+                )
+            )
         for name, (x, y) in self.zone_pos.items():
             center = (round(x), round(y))
             pygame.draw.circle(
@@ -228,7 +235,7 @@ class GraphicalDisplay:
         status = f"Turn {turn}/{last}" + (" (PAUSED)" if paused else "")
         self.screen.blit(
             self.font.render(status, True, TEXT),
-            (15, 15)
+            (700, 15)
         )
         pygame.display.flip()
 

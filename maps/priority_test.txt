@@ -1,8 +1,8 @@
-nb_drones: 1
+nb_drones: 3
 start_hub: s 0 0
 end_hub: g 3 0
 hub: n1 1 1
-hub: n2 2 1
+hub: n2 2 1[zone=blocked]
 hub: p1 1 -1 [zone=priority]
 hub: p2 2 -1
 connection: s-n1

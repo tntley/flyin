@@ -6,8 +6,8 @@ from graph import Graph, PathFinder
 from simulation import SimulationError, Simulation
 from planner import Planner, PlanningError
 from terminal import TerminalColor
-from visual import GraphicalDisplay
 import argparse
+import os
 
 
 def define_flag() -> argparse.Namespace:
@@ -78,6 +78,8 @@ def main() -> None:
         for line in result[1]:
             print(line)
         if gui:
+            os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
+            from visual import GraphicalDisplay
             graphic = GraphicalDisplay(graph, snapshots)
             graphic.run()
     except OSError as o:
