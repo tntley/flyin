@@ -80,7 +80,7 @@ class Simulation:
             self,
             planned: list[tuple[Drone, Connection, Zone]]
     ) -> None:
-        """Check if a zone would exceed its capacity on a turn."""
+        """Check if a zone would exceed its capacity after this turn."""
         occupancy: Counter[str] = Counter()
         moving_drones = {
             drone.id: destination

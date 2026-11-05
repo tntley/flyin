@@ -181,17 +181,17 @@ class Planner:
             The route's steps as (start time, zone, end time, connection),
             or None if no route ends within max_time.
         """
-        start = (0, 0, self.graph.start.name)
-        heap: list[tuple[int, int, str]] = [start]
+        start = (0, 0, 0, self.graph.start.name)
+        heap: list[tuple[int, int, int, str]] = [start]
         done: set[tuple[int, str]] = set()
-        best_cost: dict[tuple[int, str], tuple[int, int]] = {}
+        best_cost: dict[tuple[int, str], tuple[int, int, int]] = {}
         came_from: dict[
             tuple[int, str], tuple[tuple[int, str], Connection | None]] = {}
         end_state: tuple[int, str] | None = None
 
         while heap:
             current = heapq.heappop(heap)
-            time, priority, current_name = current
+            time, moves, priority, current_name = current
             current_state = (time, current_name)
             if current_state in done:
                 continue
@@ -207,16 +207,17 @@ class Planner:
             )
             for next_time, next_zone, link in next_states:
                 neighbor_name = next_zone.name
+                new_moves = moves + (0 if link is None else 1)
                 new_priority = priority - (1 if next_zone.is_priority else 0)
                 next_state = (next_time, neighbor_name)
-                cost = (next_time, new_priority)
+                cost = (next_time, new_moves, new_priority)
                 if next_state in done or next_time > max_time:
                     continue
                 if next_state not in best_cost or best_cost[next_state] > cost:
                     best_cost[next_state] = cost
                     heapq.heappush(
                         heap,
-                        (next_time, new_priority, neighbor_name)
+                        (next_time, new_moves, new_priority, neighbor_name)
                     )
                     came_from[next_state] = ((time, current_zone.name), link)
         if end_state is None:

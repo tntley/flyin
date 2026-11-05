@@ -117,9 +117,9 @@ This entering step is performed by the `MapParser` class in the **parsing.py** s
 
 ### Reachability stage
 The second step, performed by the `PathFinder` class in the **graph.py** source file, uses `Dijkstra's alorithm` to find the cheapest route for a single drone on the map.
-Each move costs the entry cost of the destination zone (1 or 2 for restricted zones). The algorithm also ensures that blocked zones are never entered. For routes with the same number of turns, the one through the priority zones wins. So instead of merely comparing the cost of routes, the algorithm uses a `(turn, priority_zones)` cost tuple, where 'priority_zones' is either 0 or -1.
+Each move costs the entry cost of the destination zone (1 or 2 for restricted zones). The algorithm also ensures that blocked zones are never entered. For routes with the same number of turns, the one through the priority zones wins. So instead of merely comparing the cost of routes, the algorithm uses a `(turn, moves, priority_zones)` cost tuple, where 'priority_zones' is either 0 or -1 and moves represent the number of moves performed in this route.
 
-    Python compares tuples element by element, so the number of turns (the first element of the tuple), always decides first whether a route is cheaper than another. The number for the priority zone (second element) only serve as a tie breaker if two routes have the same number of turns.
+> Python compares tuples **element by element**, so the number of turns (the first element of the tuple), always decides first whether a route is cheaper than another. The number of moves was added later on after noticing some drones close to the goal going back to a priority zone behind. The number for the priority zone (second element) then serve as a tie breaker if two routes have the same number of turns and the same number of moves so far.
 
 This step runs one time before any planning and ignores every other drones. It tries to secure an optimal route for one drone to decide if the program can move forward. If no route is found, it triggers an error and ends the program early stage. Otherwise, the resulting route's length will be used to set a number of turn limit for the planner.
 
@@ -263,6 +263,8 @@ The program was designed based on a set of map files provided at the start of th
     - https://www.geeksforgeeks.org/dsa/time-and-space-complexity-of-dijkstras-algorithm/
 - ANSI escape code guide for colored terminal display:
     - https://jakob-bagterp.github.io/colorist-for-python/ansi-escape-codes/extended-256-colors/#structure
+- Learning pygame to produce the graphical interface and understand how it works:
+    - https://www.pygame.org/docs/ref/pygame.html
 
 ### AI Use
 As AI takes more and more space in the field, it's become an almost inevitable assisting tool to learn new python concepts more efficiently. AI was used in the design processus of this program, primarly as an assisting learning tool, at different stage of the project:
@@ -271,5 +273,4 @@ As AI takes more and more space in the field, it's become an almost inevitable a
 - Used as an assisting tool to figure out bugs in my primar implementations of the parsing tool and the shortest path finding algorithm.
 - Helped with learning animation and displaying movement frame by frame using pygame for the last minute graphical interface.
 
-
-
+Last but not least, `peer learning` was one of the main foundation of designing this project, like many others that has been. Peer advices proved to be a decisive help whenever the project has met a seemingly dead end, active discussions with peers always brought enlightnment and fresh ideas to pick it up.

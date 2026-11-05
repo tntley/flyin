@@ -97,6 +97,9 @@ def main() -> None:
     except PlanningError as t:
         print(t, file=sys.stderr)
         sys.exit(1)
+    except KeyboardInterrupt:
+        print("Program interrupted.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
