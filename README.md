@@ -4,19 +4,19 @@
 
 ## Description
 
-`Fly-in` is a rouing program that aims to **navigate efficiently a fleet of drones from a starting zone to an ending zone** across a network of connected zones. The system aims for all the drones to reach the designated goal in **as few simulation turns as possible**, while complying to **a set of movement constraints**.
+`Fly-in` is a routing program that intends to **navigate efficiently a fleet of drones from a starting zone to an ending zone** across a network of connected zones. The system aims for all the drones to reach the designated goal in **as few simulation turns as possible**, while complying to **a set of movement constraints**.
 
 ### The network
 
 The network, or `Graph`, as refered to across the source files, is made up of Zones and Connections linking said zones to each other, ensuring that there's a viable route for the fleet to reach the goal.
 
 Zones and connections in-betweens are defined based on a set of characteristics :
-- **Capacities** : each zone and connection has a maximum number of drones that can occupy said zone or capacity simultaneously. If not specified, the capacity efaults to 1 drone.
+- **Capacities** : each zone and connection has a maximum number of drones that can occupy said zone or capacity simultaneously. If not specified, the capacity defaults to 1 drone.
 - **Type**: some zones are slower to enter, if they are restricted ; other zones might be blocked entirely, while some others are considered priorities in the pathfinding process. The type of the zone also influences its entry cost. A normal zone and a priority zone will cost 1 turn to a drone trying to access it, while a restricted zone requires 2 turns.
 - **Colors**: zones can be defined with custom colors that will be displayed throughout the colored terminal output if said color finds a match in a predefined ANSI dictionary. Otherwise, the color will simply default to the terminal's.
 
 ### How it works
-To put it simply, the program reads and parses a map file fed to it through the shell command line, plans a route for every drone in the fleet, checks the drafted plan against the set of movement constraints with an independent simulation, and then prints the movements turn by turn. An optional colored display shoes the state progression of every zone after each turn throughout the simulation.
+To put it simply, the program reads and parses a map file fed to it through the shell command line, plans a route for every drone in the fleet, checks the drafted plan against the set of movement constraints with an independent simulation, and then prints the movements turn by turn. An optional colored display shoes the state progression of every zone after each turn throughout the simulation. A graphical visualization has also been implemented and can be toggled on or off through the command line.
 
 ### The map file content
 The map file, aka the actual base of the network navigation for the fleet of drones, is one of the main foundations of this program's operation. The file is bonded by a set of strict rules regarding the format of its content, that make or break the file :
@@ -85,7 +85,7 @@ Other useful `make` targets include:
 Alternatively, it is also possible to run the program against a map file without make:
 
 ```bash
-python3 main.py maps/easy/01_linear_path.txt [--visual]
+python3 main.py maps/easy/01_linear_path.txt [--visual] [--gui]
 ```
 
 For the sake of organization and separation, the required ouptut (the turn lines) are printed on standard output while the visual display are sent to standard error. This design choice was made so that running the following command :
@@ -102,13 +102,13 @@ The drones routing performed by this program has been designed meticulously base
 - The start and end zone have no capacity. Their capacity defaults to the number of drones in play for clarity.
 - When a drone use a connection, it counts agains the capacity of that connection during that turn, regardless of its direction, means two drones crossing a link on a given turn count as 2.
 - Entering a restricted zone takes 2 turns: the drone is on the connection during the first turn (counting against the connection's capacity on that turn) and must reach the other zone on the second turn. This means the drone may only depart from one end of the connection if the other end (the destination) is ensured to have enough place on the second turn.
-- A drone in transit (on a connction during one turn, on its way to a restricted zone) is printed with the connection name in map file order, not in the direction order.
+- A drone in transit (on a connection during one turn, on its way to a restricted zone) is printed with the connection name in map file order, not in the direction order.
 
 ## Algorithm
 
 ### General overview
 
-The problem tackled by the program canbe separated in two distinctive parts: finding cheap route, and scheduling several drones so that they can efficiently share zones and connections without exceeding the allowed capacity. The program plans the drones one at a time, each around the space and time already reserved by the previous drones, and then verifies the whole plan (the moves per turn) with a separate simulation.
+The problem tackled by the program can be separated in two distinctive parts: finding cheap route, and scheduling several drones so that they can efficiently share zones and connections without exceeding the allowed capacity. The program plans the drones one at a time, each around the space and time already reserved by the previous drones, and then verifies the whole plan (the moves per turn) with a separate simulation.
 
 The program was designed to run in 4 separate yet interdependent stages:
 
@@ -117,9 +117,9 @@ This entering step is performed by the `MapParser` class in the **parsing.py** s
 
 ### Reachability stage
 The second step, performed by the `PathFinder` class in the **graph.py** source file, uses `Dijkstra's alorithm` to find the cheapest route for a single drone on the map.
-Each move costs the entry cost of the destination zone (1 or 2 for restricted zones). The algorithm also ensures that blocked zones are never entered. For routes with the same number of turns, the one through the priority zones wins. So instead of merely comparing the cost of routes, the algorithm uses a `(turn, moves, priority_zones)` cost tuple, where 'priority_zones' is either 0 or -1 and moves represent the number of moves performed in this route.
+Each move costs the entry cost of the destination zone (1 or 2 for restricted zones). The algorithm also ensures that blocked zones are never entered. For routes with the same number of turns, the one through the priority zones wins. So instead of merely comparing the cost of routes to select the cheapest one in the heap, the algorithm uses a `(turn, moves, priority_zones)` cost tuple, where 'priority_zones' is either 0 or -1 and moves represent the number of moves performed in this route.
 
-> Python compares tuples **element by element**, so the number of turns (the first element of the tuple), always decides first whether a route is cheaper than another. The number of moves was added later on after noticing some drones close to the goal going back to a priority zone behind. The number for the priority zone (second element) then serve as a tie breaker if two routes have the same number of turns and the same number of moves so far.
+> Python compares tuples **element by element**, so the number of turns (the first element of the tuple), always decides first whether a route is cheaper than another. The number of moves was added later on after noticing some drones close to the goal going back to a priority zone behind. In that case, the algorithm will prefer the route with fewers moves to deliver the drone instead of heading back to the priority zone and add unecessary moves. The number for the priority zone (second element) then serve as a tie breaker if two routes have the same number of turns and the same number of moves so far.
 
 This step runs one time before any planning and ignores every other drones. It tries to secure an optimal route for one drone to decide if the program can move forward. If no route is found, it triggers an error and ends the program early stage. Otherwise, the resulting route's length will be used to set a number of turn limit for the planner.
 
@@ -130,10 +130,10 @@ The `ReservationTable` records how many drones are planned in each zone at each 
 
 Drones are planned **one at a time**, in order. For each drone, the `Planner` searches for its shortest arrival around the earlier bookings in the `ReservationTable`. The search is the same Dijsktra loop as in `PathFinder`, but slightly different. The loop was tweaked to be **time aware** by replacing the state, previously a zone, by a pair of **(time, zone)**
 
-    In practice, being in a zone at time 1 and in the same zone at time 2 are two different states, because the reservation differs.
+> In practice, being in a zone at time 1 and in the same zone at time 2 are two different states, because the reservation differs.
 
 From a given state (t, zone), the drone has three options based on the reservation at time t:
-- it can wait in the current, the next state would then become **(t + 1, zone)** IF zone has room at time t + 1.
+- it can wait in the current zone, the next state would then become **(t + 1, zone)** IF zone has room at time t + 1.
 - it can move to a normal or priority neighboring zone, the next state would then be **(t + 1, neigbor)**, IF the neighbor has enough space at t + 1 and the connection between **zone-neighbor** has room during turn t + 1.
 - it can engage on the way to a restricted zone, the next state would then become **(t + 2, restricted_neighbor)**, IF the connection **zone-restricted_neighbor** has room during t + 1 and the restricted zone has room at t + 2.
 
@@ -146,7 +146,7 @@ Path distribution and waiting are handled as follow during the search: when the 
 This operation is performed by the `Simulation` class located in the **simulation.py** source file. It has been designed to replay the plan (the moves per turn) generated by the planner turn by turn, checks every rule and produces the expected output lines.
 
 For each turn, the `Simulation`:
-  - checks every move in the 'drone id to connection dictionary': makes sure the drone exists, that it's not delivered yet or in transit during said turn, and is at one end of the specified connection.
+  - checks every move in the **drone id to connection dictionary**: makes sure the drone exists, that it's not delivered yet or in transit during said turn, and is at one end of the specified connection.
   - checks the zone capacities after the turn is over (the moves would've been applied at that point).
   - checks the connection capacities during each turn.
 
@@ -163,8 +163,12 @@ The turn lines are colored by the destination zone's color when standard error i
 
 For precision, the zone's color can be any valid single-word string. There is no fixed list of "allowed" colors, which would imply that any other colors outside said list would not be allowed and, thus, crash the program. However, because there's no way for the program to display the colors on the terminal if not told their ANSI escape codes, a list was build for this purpose only. **It is not an allowed colors list**, means every other colors outside the list would still pass, but since the program was not provided the ANSI escape code for that color, it will display the zone in the default terminal color (namely white).
 
-    The --visual flag tells the program to display the colored terminal output.
-        example : make run ARGS="maps/easy/01_linear_path.txt --visual"
+> The --visual flag tells the program to display the colored terminal output.
+
+example :
+```
+make run ARGS="maps/easy/01_linear_path.txt --visual"
+```
 
 The output is displayed as followed :
 
@@ -191,7 +195,7 @@ The graphical user interface displays a simple animated visualization of the dro
 Simple features has been implemented alongside the visualization, namely:
 - a `pause` feature using the **space key**.
 - a `rewind/forward` feature using the **left and right keys**.
-- the number of turns is displayed in the top left corner of the window.
+- the number of turns is displayed at the top of the window.
 
 ## Complete example
 
@@ -252,6 +256,14 @@ The program was designed based on a set of map files provided at the start of th
 |||**Challenger map**|
 |The impossible dream|25|45|43|
 
+## Complexity
+
+With V zones, E connections, D drones, and T the time limit:
+- PathFinder runs once in O((V + E) log V) time and O(V + E) memory.
+- One drone's planning search explores at most V × T states, each with at most one option per connection plus waiting, so it takes O((V + E) · T · log(V · T)) time and O(V · T) memory.
+- The whole plan is D such searches. Since the schedule gets longer as drones are added, T grows with D, so the total cost grows faster than linearly in the number of drones, roughly with D².
+- The reservation table holds one entry per booked step: memory proportional to the total length of all routes.
+
 ## Resources
 - Further learning about dataclasses in Python:
     - https://docs.python.org/3/library/dataclasses.html
@@ -272,5 +284,6 @@ As AI takes more and more space in the field, it's become an almost inevitable a
 - Used as a virtual python teacher to bring enlightnment on concepts like dataclasses, heapq, frozenset;
 - Used as an assisting tool to figure out bugs in my primar implementations of the parsing tool and the shortest path finding algorithm.
 - Helped with learning animation and displaying movement frame by frame using pygame for the last minute graphical interface.
+- Understand Big O notation complexity at each step of the program and write about it.
 
 Last but not least, `peer learning` was one of the main foundation of designing this project, like many others that has been. Peer advices proved to be a decisive help whenever the project has met a seemingly dead end, active discussions with peers always brought enlightnment and fresh ideas to pick it up.
