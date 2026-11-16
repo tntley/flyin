@@ -201,6 +201,8 @@ class MapParser:
             raise ParserError(line_no, "missing ':' after label")
         if not self.nb_drones and label.strip() != "nb_drones":
             raise ParserError(line_no, "the first line should be nb_drones")
+        if not interest:
+            raise ParserError(line_no, "missing the actual content.")
         match label.strip():
             case "nb_drones":
                 self._parse_nb_drones(line_no, interest)
@@ -211,6 +213,116 @@ class MapParser:
 
             case _:
                 raise ParserError(line_no, f"unknown type '{label.strip()}'")
+
+    def _parse_nb_drones(
+            self,
+            line_no: int,
+            interest: str
+    ) -> None:
+        """Extract the number of drones from map file and stores it.
+
+        Parameters
+        ----------
+        line_no : int
+            Number of the current line.
+        interest : str
+            Line content after the ':'.
+        """
+        body, forbidden = self._split_from_metadata(line_no, interest)
+        if len(body.split()) != 1:
+            raise ParserError(line_no, "expected one number only")
+        if forbidden is not None:
+            raise ParserError(line_no, "metadata forbidden here")
+        if self.nb_drones:
+            raise ParserError(
+                line_no, "there should only be one nb_drones line")
+        else:
+            try:
+                converted = int(body)
+                if converted <= 0:
+                    raise ParserError(
+                        line_no, "number should be greater than 0")
+                self.nb_drones = converted
+            except ValueError:
+                raise ParserError(line_no, "invalid number")
+
+    @staticmethod
+    def _split_from_metadata(
+            line_no: int,
+            interest: str
+    ) -> tuple[str, str | None]:
+        """Separates the name and coordinates from the metadatas.
+
+        Parameters
+        ----------
+        line_no : int
+            Number of the currently read line.
+        interest : str
+            Line content after the ':', containing the values to be split.
+
+        Returns
+        -------
+        tupl[str, str | None]
+            A tuple of the content outside the brackets and the content inside.
+            The latter is None if there's no brackets.
+        """
+        opening = interest.find("[")
+        ending = interest.find("]")
+        if opening == -1 and ending == -1:
+            return (interest, None)
+        else:
+            if interest.count("[") != interest.count("]"):
+                raise ParserError(line_no, "missing pair bracket")
+            if not interest.endswith("]"):
+                raise ParserError(line_no, "garbage value")
+            if interest.count("[") != 1 or interest.count("]") != 1:
+                raise ParserError(line_no, "too many brackets")
+        return (interest[:opening], interest[opening+1:ending])
+
+    def _parse_zone(
+            self,
+            line_no: int,
+            label: str,
+            interest: str,
+    ) -> None:
+        """Handle the lines labelled as hubs and parse their content.
+
+        Parameters
+        ----------
+        line_no : int
+            Number of the current line.
+        label : str
+            Content prior the ':', considered label.
+        interest : str
+            Line content after the ':'.
+        """
+        body, final_metadata = self._process_line_content(
+            line_no,
+            interest,
+            expected_number=3,
+            message_content="name x y"
+        )
+        zone = self._build_zone(
+            line_no,
+            label,
+            body,
+            final_metadata
+        )
+        if zone.start:
+            if self.start is None:
+                self.start = zone
+            else:
+                raise ParserError(
+                    line_no, "there should be one start zone only")
+        if zone.end:
+            if self.end is None:
+                self.end = zone
+            else:
+                raise ParserError(line_no, "there should be one end zone only")
+        if zone.name not in self.zones:
+            self.zones[zone.name] = zone
+        else:
+            raise ParserError(line_no, "duplicate zone")
 
     def _process_line_content(
             self,
@@ -246,39 +358,6 @@ class MapParser:
         # if final_metadata:
         #     print(final_metadata)
         return (body.split(), final_metadata)
-
-    @staticmethod
-    def _split_from_metadata(
-            line_no: int,
-            interest: str
-    ) -> tuple[str, str | None]:
-        """Separates the name and coordinates from the metadatas.
-
-        Parameters
-        ----------
-        line_no : int
-            Number of the currently read line.
-        interest : str
-            Line content after the ':', containing the values to be split.
-
-        Returns
-        -------
-        tupl[str, str | None]
-            A tuple of the content outside the brackets and the content inside.
-            The latter is None if there's no brackets.
-        """
-        opening = interest.find("[")
-        ending = interest.find("]")
-        if opening == -1 and ending == -1:
-            return (interest, None)
-        else:
-            if interest.count("[") != interest.count("]"):
-                raise ParserError(line_no, "missing pair bracket")
-            if not interest.endswith("]"):
-                raise ParserError(line_no, "garbage value")
-            if interest.count("[") != 1 or interest.count("]") != 1:
-                raise ParserError(line_no, "too many brackets")
-        return (interest[:opening], interest[opening+1:ending])
 
     def _read_optional_metadata(
             self,
@@ -338,83 +417,6 @@ class MapParser:
             else:
                 raise ParserError(line_no, "malformed metadata")
         return result
-
-    def _parse_nb_drones(
-            self,
-            line_no: int,
-            interest: str
-    ) -> None:
-        """Extract the number of drones from map file and stores it.
-
-        Parameters
-        ----------
-        line_no : int
-            Number of the current line.
-        interest : str
-            Line content after the ':'.
-        """
-        body, forbidden = self._split_from_metadata(line_no, interest)
-        if len(body.split()) != 1:
-            raise ParserError(line_no, "expected one number only")
-        if forbidden is not None:
-            raise ParserError(line_no, "metadata forbidden here")
-        if self.nb_drones:
-            raise ParserError(
-                line_no, "there should only be one nb_drones line")
-        else:
-            try:
-                converted = int(body)
-                if converted <= 0:
-                    raise ParserError(
-                        line_no, "number should be greater than 0")
-                self.nb_drones = converted
-            except ValueError:
-                raise ParserError(line_no, "invalid number")
-
-    def _parse_zone(
-            self,
-            line_no: int,
-            label: str,
-            interest: str,
-    ) -> None:
-        """Handle the lines labelled as hubs and parse their content.
-
-        Parameters
-        ----------
-        line_no : int
-            Number of the current line.
-        label : str
-            Content prior the ':', considered label.
-        interest : str
-            Line content after the ':'.
-        """
-        body, final_metadata = self._process_line_content(
-            line_no,
-            interest,
-            expected_number=3,
-            message_content="name x y"
-        )
-        zone = self._build_zone(
-            line_no,
-            label,
-            body,
-            final_metadata
-        )
-        if zone.start:
-            if self.start is None:
-                self.start = zone
-            else:
-                raise ParserError(
-                    line_no, "there should be one start zone only")
-        if zone.end:
-            if self.end is None:
-                self.end = zone
-            else:
-                raise ParserError(line_no, "there should be one end zone only")
-        if zone.name not in self.zones:
-            self.zones[zone.name] = zone
-        else:
-            raise ParserError(line_no, "duplicate zone")
 
     def _build_zone(
             self,
