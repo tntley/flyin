@@ -40,7 +40,7 @@ class Simulation:
             for i in range(1, self.graph.nb_drones + 1)
         }
         if len(self.drones) > 1000:
-            raise SimulationError("Limit fleet size at 1000.")
+            raise SimulationError("Limit fleet size at 1000 drones.")
 
     @property
     def all_delivered(self) -> bool:

@@ -216,5 +216,4 @@ class PathFinder:
             name = came_from[name]
         path.append(self.graph.start)
         path.reverse()
-        # print([zone.name for zone in path])
         return path

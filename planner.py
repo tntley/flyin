@@ -181,6 +181,7 @@ class Planner:
             The route's steps as (start time, zone, end time, connection),
             or None if no route ends within max_time.
         """
+        # the int represents turn(time), moves, priority
         start = (0, 0, 0, self.graph.start.name)
         heap: list[tuple[int, int, int, str]] = [start]
         done: set[tuple[int, str]] = set()
@@ -275,7 +276,7 @@ class Planner:
         Returns
         -------
         list[dict[int, Connection]]
-            One move dictionnary per turn, will be passed to Simulation.run.
+            One dictionnary of moves per turn, will be passed to Simulation.run.
         """
         schedule: list[dict[int, Connection]] = []
         table = ReservationTable(self.graph)
@@ -288,7 +289,7 @@ class Planner:
                 table.book_zone(final_z, final_t)
                 if link is not None:
                     table.book_connection(link, previous_t + 1)
-                    while len(schedule) <= previous_t:
+                    while len(schedule) < final_t:
                         schedule.append({})
                     schedule[previous_t][drone_id] = link
         return schedule

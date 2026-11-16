@@ -181,8 +181,7 @@ class MapParser:
             for line_no, line in enumerate(f, start=1):
                 considered = line.partition("#")[0]
                 stripped = considered.strip()
-                if stripped and not stripped.startswith("#"):
-                    # print(f"line {line_no}: {stripped.rstrip()}")
+                if stripped:
                     self._scan_line(line_no, stripped)
         self._final_check()
 
@@ -202,7 +201,7 @@ class MapParser:
         if not self.nb_drones and label.strip() != "nb_drones":
             raise ParserError(line_no, "the first line should be nb_drones")
         if not interest:
-            raise ParserError(line_no, "missing the actual content.")
+            raise ParserError(line_no, "missing the actual content")
         match label.strip():
             case "nb_drones":
                 self._parse_nb_drones(line_no, interest)
@@ -355,8 +354,6 @@ class MapParser:
             raise ParserError(
                 line_no, f"line should be formatted as {message_content}")
         final_metadata = self._read_optional_metadata(line_no, metadata)
-        # if final_metadata:
-        #     print(final_metadata)
         return (body.split(), final_metadata)
 
     def _read_optional_metadata(
@@ -462,6 +459,11 @@ class MapParser:
                     # if not zone.start and not zone.end:
                     try:
                         zone.type = ZoneType(value)
+                        if zone.start and zone.type == ZoneType.BLOCKED:
+                            raise ParserError(
+                                line_no,
+                                "starting zone cannot be blocked"
+                            )
                     except ValueError:
                         raise ParserError(
                             line_no, f"unknown zone type: {value}")
@@ -524,8 +526,6 @@ class MapParser:
             self.zones[zone_a],
             self.zones[zone_b]
         )
-        # print(f"{zone_a} is linked to :"
-        #       f" {connection.other_zone(self.zones[zone_a]).name}")
         for key, value in final_metadata.items():
             match key:
                 case "max_link_capacity":
