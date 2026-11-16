@@ -114,9 +114,6 @@ class TerminalColor:
             print(f"{list_drones:<{second_padding}}", end="", file=sys.stderr)
             connections_of = simulation.graph.connections_of(zone)
             if zone is not simulation.graph.end:
-                # print(
-                # f"-> {', '.join(connection.other_zone(zone).name
-                #  for connection in connections_of)}")
                 for i, link in enumerate(connections_of):
                     destination = link.other_zone(zone)
                     text = self._paint(

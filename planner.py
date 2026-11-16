@@ -276,7 +276,7 @@ class Planner:
         Returns
         -------
         list[dict[int, Connection]]
-            One dictionnary of moves per turn, will be passed to Simulation.run.
+            One dictionnary of moves per turn, passed to Simulation.run.
         """
         schedule: list[dict[int, Connection]] = []
         table = ReservationTable(self.graph)
