@@ -449,10 +449,18 @@ class MapParser:
         except ValueError:
             raise ParserError(line_no, "coordinates should be integers")
         zone = Zone(name, int(x), int(y))
+        for space in self.zones.values():
+            if space.x == zone.x and space.y == zone.y:
+                raise ParserError(
+                    line_no,
+                    "pair of (x, y) coordinates already "
+                    "used for a registered zone")
         if label == "start_hub":
             zone.start = True
         elif label == "end_hub":
             zone.end = True
+        if zone.start or zone.end:
+            zone.capacity = self.nb_drones
         for key, value in metadata.items():
             match key:
                 case "zone":
