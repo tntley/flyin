@@ -35,6 +35,10 @@ def define_flag() -> argparse.Namespace:
         action="store_true",
         help="Toggle the optional graphical user interface."
     )
+    flags.add_argument(
+        "--detail",
+        action="store_true",
+    )
     return flags.parse_args()
 
 
@@ -70,13 +74,24 @@ def main() -> None:
         max_time = (len(test_path) + graph.nb_drones) * 2
         turns = planner.plan(max_time)
 
+        capture = simulation.snapshot()
+
         snapshots: list[dict[int, Zone | Connection]] = [
-            simulation.snapshot()]
+            capture[0]]
+
+        count_zone_occ: list[dict[str, int]] = [capture[1]]
+        count_link_occ: list[dict[str, int]] = [capture[2]]
 
         result = simulation.run(
-            visual, turns, display.display_status, snapshots)
+            visual, turns, display.display_status,
+            snapshots, count_zone_occ, count_link_occ)
+
         for line in result[1]:
             print(line)
+
+        if flags.detail:
+            simulation.occupancy(result[0], count_zone_occ, count_link_occ)
+
         if gui:
             os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
             from visual import GraphicalDisplay

@@ -156,15 +156,21 @@ class Simulation:
         pairs.sort()
         return " ".join(f"D{drone_id}-{name}" for drone_id, name in pairs)
 
-    def snapshot(self) -> dict[int, Zone | Connection]:
+    def snapshot(
+            self
+    ) -> tuple[dict[int, Zone | Connection], dict[str, int], dict[str, int]]:
         """Return each drone's current location."""
         result: dict[int, Zone | Connection] = {}
+        count_zone_occ: Counter[str] = Counter()
+        count_link_occ: Counter[str] = Counter()
         for id, drone in self.drones.items():
             if isinstance(drone.location, Transit):
                 result[id] = drone.location.connection
+                count_link_occ[drone.location.connection.name] += 1
             else:
                 result[id] = drone.location
-        return result
+                count_zone_occ[drone.location.name] += 1
+        return (result, count_zone_occ, count_link_occ)
 
     def step(self, moves: dict[int, Connection]) -> str:
         """Check moves legality, zone and connection capacity on one turn."""
@@ -180,7 +186,9 @@ class Simulation:
             visual: bool,
             moves_per_turn: list[dict[int, Connection]],
             display: Callable[["Simulation"], None],
-            snapshots: list[dict[int, Zone | Connection]]
+            snapshots: list[dict[int, Zone | Connection]],
+            count_zone_occ: list[dict[str, int]],
+            count_link_occ: list[dict[str, int]]
     ) -> tuple[int, list[str]]:
         """Play a whole plan and check if all drones are delivered.
 
@@ -208,7 +216,10 @@ class Simulation:
             print(file=sys.stderr)
         for turn in moves_per_turn:
             this_turn = self.step(turn)
-            snapshots.append(self.snapshot())
+            capture = self.snapshot()
+            snapshots.append(capture[0])
+            count_zone_occ.append(capture[1])
+            count_link_occ.append(capture[2])
             result.append(this_turn)
             if visual:
                 print(f"Turn {self.turn}: {this_turn}", file=sys.stderr)
@@ -217,3 +228,23 @@ class Simulation:
         if not self.all_delivered:
             raise SimulationError("Some drones were not delivered")
         return (self.turn, result)
+
+    def occupancy(
+            self,
+            number_turn: int,
+            zone_occ: list[dict[str, int]],
+            link_occ: list[dict[str, int]]
+    ) -> None:
+        """Display simple occupancy stats per turn on stdout."""
+        print("\nOccupancy per turn:")
+        for i in range(0, number_turn + 1):
+            print(f"\nTurn {i}:")
+            for zone_name, zone in self.graph.zones.items():
+                print(f"\t- {zone_name}: {zone_occ[i][zone_name]}/"
+                      f"{zone.capacity}")
+            print("\t\tOngoing transit:")
+            for connection in self.graph.connections:
+                if connection.name in link_occ[i]:
+                    print(f"\t* {connection.name}: "
+                          f"{link_occ[i][connection.name]}/"
+                          f"{connection.capacity}")

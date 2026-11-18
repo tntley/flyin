@@ -453,6 +453,8 @@ class MapParser:
             zone.start = True
         elif label == "end_hub":
             zone.end = True
+        if zone.start or zone.end:
+            zone.capacity = self.nb_drones
         for key, value in metadata.items():
             match key:
                 case "zone":
