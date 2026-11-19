@@ -242,9 +242,8 @@ class Simulation:
             for zone_name, zone in self.graph.zones.items():
                 print(f"\t- {zone_name}: {zone_occ[i][zone_name]}/"
                       f"{zone.capacity}")
-            print("\t\tOngoing transit:")
+            print("\t\tConnection at the end of turn:")
             for connection in self.graph.connections:
-                if connection.name in link_occ[i]:
-                    print(f"\t* {connection.name}: "
-                          f"{link_occ[i][connection.name]}/"
-                          f"{connection.capacity}")
+                print(f"\t* {connection.name}: "
+                      f"{link_occ[i][connection.name]}/"
+                      f"{connection.capacity}")
