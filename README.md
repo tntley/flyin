@@ -190,12 +190,13 @@ The output is displayed as followed :
 
 ### Graphical interface
 
-The graphical user interface displays a simple animated visualization of the drones routing across the colored network of zones and connections, using the `pygame` library.
+The graphical user interface displays a simple 2D flat animated visualization of the drones routing across the colored network of zones and connections, using the `pygame` library. For the sake of clear visualization, the parsing stage has been designed so that every registered zone has a different pair of (x, y) coordinates to avoid overlap.
 
 Simple features has been implemented alongside the visualization, namely:
 - a `pause` feature using the **space key**.
 - a `rewind/forward` feature using the **left and right keys**.
 - the number of turns is displayed at the top of the window.
+- the `escape` key closes the window overall.
 
 ## Complete example
 
