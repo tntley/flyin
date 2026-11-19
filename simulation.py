@@ -35,12 +35,12 @@ class Simulation:
         """Create the Simulation object."""
         self.turn: int = 0
         self.graph = graph
+        if self.graph.nb_drones > 1000:
+            raise SimulationError("Limit fleet size at 1000 drones.")
         self.drones: dict[int, Drone] = {
             i: Drone(i, self.graph.start, self.graph.end)
             for i in range(1, self.graph.nb_drones + 1)
         }
-        if len(self.drones) > 1000:
-            raise SimulationError("Limit fleet size at 1000 drones.")
 
     @property
     def all_delivered(self) -> bool:
