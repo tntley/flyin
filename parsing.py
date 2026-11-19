@@ -464,7 +464,6 @@ class MapParser:
         for key, value in metadata.items():
             match key:
                 case "zone":
-                    # if not zone.start and not zone.end:
                     try:
                         zone.type = ZoneType(value)
                         if zone.start and zone.type == ZoneType.BLOCKED:
@@ -477,9 +476,9 @@ class MapParser:
                             line_no, f"unknown zone type: {value}")
                 case "max_drones":
                     try:
-                        converted = int(value)
                         if zone.start or zone.end:
                             continue
+                        converted = int(value)
                         if converted <= 0:
                             raise ParserError(
                                 line_no,
