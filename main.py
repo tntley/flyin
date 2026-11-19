@@ -6,6 +6,7 @@ from graph import Graph, PathFinder
 from simulation import SimulationError, Simulation
 from planner import Planner, PlanningError
 from terminal import TerminalColor
+from collections import Counter
 import argparse
 import os
 
@@ -80,17 +81,17 @@ def main() -> None:
             capture[0]]
 
         count_zone_occ: list[dict[str, int]] = [capture[1]]
-        count_link_occ: list[dict[str, int]] = [capture[2]]
+        during_turn: list[Counter[str]] = [Counter()]
 
         result = simulation.run(
             visual, turns, display.display_status,
-            snapshots, count_zone_occ, count_link_occ)
+            snapshots, count_zone_occ, during_turn)
 
         for line in result[1]:
             print(line)
 
         if flags.detail:
-            simulation.occupancy(result[0], count_zone_occ, count_link_occ)
+            simulation.occupancy(result[0], count_zone_occ, during_turn)
 
         if gui:
             os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"

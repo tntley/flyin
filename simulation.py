@@ -108,7 +108,7 @@ class Simulation:
     def _check_connection_capacity(
             self,
             planned: list[tuple[Drone, Connection, Zone]]
-    ) -> None:
+    ) -> Counter[str]:
         """Check if a connection would exceed its capacity on a turn."""
         passage: Counter[str] = Counter()
         links: dict[str, Connection] = {}
@@ -120,6 +120,7 @@ class Simulation:
             if count > links[connection_name].capacity:
                 raise SimulationError(
                     f"{connection_name} has exceeded the allowed quota")
+        return passage
 
     def _apply(
             self,
@@ -158,25 +159,23 @@ class Simulation:
 
     def snapshot(
             self
-    ) -> tuple[dict[int, Zone | Connection], dict[str, int], dict[str, int]]:
+    ) -> tuple[dict[int, Zone | Connection], dict[str, int]]:
         """Return each drone's current location."""
         result: dict[int, Zone | Connection] = {}
         count_zone_occ: Counter[str] = Counter()
-        count_link_occ: Counter[str] = Counter()
         for id, drone in self.drones.items():
             if isinstance(drone.location, Transit):
                 result[id] = drone.location.connection
-                count_link_occ[drone.location.connection.name] += 1
             else:
                 result[id] = drone.location
                 count_zone_occ[drone.location.name] += 1
-        return (result, count_zone_occ, count_link_occ)
+        return (result, count_zone_occ)
 
-    def step(self, moves: dict[int, Connection]) -> str:
+    def step(self, moves: dict[int, Connection], during_turn: list[Counter[str]]) -> str:
         """Check moves legality, zone and connection capacity on one turn."""
         planned = self._check_moves(moves)
         self._check_zone_capacity(planned)
-        self._check_connection_capacity(planned)
+        during_turn.append(self._check_connection_capacity(planned))
         result = self._apply(planned)
         self.turn += 1
         return result
@@ -188,7 +187,7 @@ class Simulation:
             display: Callable[["Simulation"], None],
             snapshots: list[dict[int, Zone | Connection]],
             count_zone_occ: list[dict[str, int]],
-            count_link_occ: list[dict[str, int]]
+            during_turn: list[Counter[str]]
     ) -> tuple[int, list[str]]:
         """Play a whole plan and check if all drones are delivered.
 
@@ -215,11 +214,10 @@ class Simulation:
             display(self)
             print(file=sys.stderr)
         for turn in moves_per_turn:
-            this_turn = self.step(turn)
+            this_turn = self.step(turn, during_turn)
             capture = self.snapshot()
             snapshots.append(capture[0])
             count_zone_occ.append(capture[1])
-            count_link_occ.append(capture[2])
             result.append(this_turn)
             if visual:
                 print(f"Turn {self.turn}: {this_turn}", file=sys.stderr)
@@ -233,17 +231,18 @@ class Simulation:
             self,
             number_turn: int,
             zone_occ: list[dict[str, int]],
-            link_occ: list[dict[str, int]]
+            during_turn: list[Counter[str]]
     ) -> None:
         """Display simple occupancy stats per turn on stdout."""
         print("\nOccupancy per turn:")
         for i in range(0, number_turn + 1):
             print(f"\nTurn {i}:")
+            print("\t\tConnections during the turn:")
+            for connection in self.graph.connections:
+                print(f"\t* {connection.name}: "
+                      f"{during_turn[i][connection.name]}/"
+                      f"{connection.capacity}")
+            print("\t\tLocation at end of this turn:")
             for zone_name, zone in self.graph.zones.items():
                 print(f"\t- {zone_name}: {zone_occ[i][zone_name]}/"
                       f"{zone.capacity}")
-            print("\t\tConnection at the end of turn:")
-            for connection in self.graph.connections:
-                print(f"\t* {connection.name}: "
-                      f"{link_occ[i][connection.name]}/"
-                      f"{connection.capacity}")
