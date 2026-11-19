@@ -11,7 +11,7 @@ Point = tuple[float, float]
 BACKGROUND = (25, 25, 35)
 LINE = (200, 200, 200)
 TEXT = (235, 235, 235)
-CAPACITY = (255, 105, 180)
+CAPACITY = (50, 90, 200)
 DEFAULT_ZONE = (128, 128, 128)
 PRIORITY = (34, 139, 34)
 RESTRICTED = (255, 165, 0)
@@ -47,7 +47,7 @@ class GraphicalDisplay:
         pygame.display.set_caption("Fly-in")
         self.background = pygame.image.load("assets/background.png")
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont(None, 30)
+        self.font = pygame.font.SysFont(None, 25)
 
         self.graph = graph
         self.snapshots = snapshots
@@ -157,7 +157,7 @@ class GraphicalDisplay:
             self.screen.blit(
                 capacity_label,
                 capacity_label.get_rect(
-                    midtop=(midpoint[0], midpoint[1]+25)
+                    center=(midpoint[0], midpoint[1]+5)
                 )
             )
         for name, (x, y) in self.zone_pos.items():

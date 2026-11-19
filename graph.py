@@ -100,8 +100,6 @@ class Graph:
         int
             Max number of drones the zone can hold simultaneously.
         """
-        if zone is self.start or zone is self.end:
-            return self.nb_drones
         return zone.capacity
 
     def connection_between(self, zone_a: Zone, zone_b: Zone) -> Connection:

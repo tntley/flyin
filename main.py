@@ -64,6 +64,7 @@ def main() -> None:
         display = TerminalColor()
 
         path = PathFinder(graph)
+        
         test_path = path.find_path()
         if test_path is None:
             raise ValueError("No route found.")

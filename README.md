@@ -113,7 +113,7 @@ The problem tackled by the program can be separated in two distinctive parts: fi
 The program was designed to run in 4 separate yet interdependent stages:
 
 ### Parsing stage
-This entering step is performed by the `MapParser` class in the **parsing.py** source file. It validates the map file to run line by line and reports the line and the error in case there's any.
+This entering step is performed by the `MapParser` class in the **parsing.py** source file. It validates the **map file to run** line by line and reports the line and the error in case there's any.
 
 ### Reachability stage
 The second step, performed by the `PathFinder` class in the **graph.py** source file, uses `Dijkstra's alorithm` to find the cheapest route for a single drone on the map.

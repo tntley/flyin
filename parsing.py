@@ -450,7 +450,7 @@ class MapParser:
             raise ParserError(line_no, "coordinates should be integers")
         zone = Zone(name, int(x), int(y))
         for space in self.zones.values():
-            if space.x == zone.x and space.y == zone.y:
+            if zone.x == space.x and zone.y == space.y:
                 raise ParserError(
                     line_no,
                     "pair of (x, y) coordinates already "

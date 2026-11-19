@@ -26,10 +26,10 @@ clean:
 	rm -rf $(VENV)
 
 lint:
-	$(PYTHON) -m flake8 --docstring-convention numpy --extend-exclude=$(VENV),anothertest.py .
+	$(PYTHON) -m flake8 --docstring-convention numpy --extend-exclude=$(VENV) .
 	$(PYTHON) -m mypy --exclude $(VENV) $(FLAGS) .
 
 lint-strict:
-	$(PYTHON) -m flake8 --docstring-convention numpy --extend-exclude=$(VENV),anothertest.py .
-	$(PYTHON) -m mypy --exclude $(VENV) --strict .
+	$(PYTHON) -m flake8 --docstring-convention numpy --extend-exclude=$(VENV) .
+	$(PYTHON) -m mypy --exclude $(VENV) $(FLAGS) --strict .
 
