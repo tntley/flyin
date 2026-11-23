@@ -100,29 +100,7 @@ class Graph:
         int
             Max number of drones the zone can hold simultaneously.
         """
-        if zone is self.start or zone is self.end:
-            return self.nb_drones
         return zone.capacity
-
-    def connection_between(self, zone_a: Zone, zone_b: Zone) -> Connection:
-        """Return the actual connection between two zones if it exists.
-
-        Parameters
-        ----------
-        zone_a : Zone
-            Zone at one end of the connection.
-        zone_b : Zone
-            Zone at the other end of the connection.
-
-        Returns
-        -------
-        Connection
-            The actual Connection object between the two zones.
-        """
-        for connection in self.connections_of(zone_a):
-            if connection.other_zone(zone_a) is zone_b:
-                return connection
-        raise ValueError(f"{zone_a.name} and {zone_b.name} are not connected")
 
 
 class PathFinder:

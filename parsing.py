@@ -449,12 +449,11 @@ class MapParser:
         except ValueError:
             raise ParserError(line_no, "coordinates should be integers")
         zone = Zone(name, int(x), int(y))
-        # if self.zones:
         for space in self.zones.values():
-            if space.x == zone.x and space.y == zone.y:
+            if zone.x == space.x and zone.y == space.y:
                 raise ParserError(
                     line_no,
-                    "pair of (x, x) coordinates already "
+                    "pair of (x, y) coordinates already "
                     "used for a registered zone")
         if label == "start_hub":
             zone.start = True
@@ -465,7 +464,6 @@ class MapParser:
         for key, value in metadata.items():
             match key:
                 case "zone":
-                    # if not zone.start and not zone.end:
                     try:
                         zone.type = ZoneType(value)
                         if zone.start and zone.type == ZoneType.BLOCKED:
@@ -478,9 +476,9 @@ class MapParser:
                             line_no, f"unknown zone type: {value}")
                 case "max_drones":
                     try:
-                        converted = int(value)
                         if zone.start or zone.end:
                             continue
+                        converted = int(value)
                         if converted <= 0:
                             raise ParserError(
                                 line_no,
@@ -562,14 +560,3 @@ class MapParser:
     def _final_check(self) -> None:
         if self.start is None or self.end is None or self.nb_drones == 0:
             raise ParserError(0, "missing mandatory map component")
-
-
-if __name__ == "__main__":
-    # parse_file()
-    parser = MapParser()
-    parser.parse("./maps/easy/01_linear_path.txt")
-    # for name, zone in parser.zones.items():
-    #     print(f"{name}: {zone}")
-    # print()
-    # for link in parser.connections:
-    #     print(link)

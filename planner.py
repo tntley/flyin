@@ -199,7 +199,7 @@ class Planner:
             done.add(current_state)
             current_zone = self.graph.zones[current_name]
             if current_zone is self.graph.end:
-                end_state = (time, current_zone.name)
+                end_state = current_state
                 break
             next_states = self._next_state(
                 current_zone,
@@ -220,7 +220,7 @@ class Planner:
                         heap,
                         (next_time, new_moves, new_priority, neighbor_name)
                     )
-                    came_from[next_state] = ((time, current_zone.name), link)
+                    came_from[next_state] = (current_state, link)
         if end_state is None:
             return None
         return self._reconstruct_path(end_state, came_from)

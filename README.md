@@ -16,12 +16,13 @@ Zones and connections in-betweens are defined based on a set of characteristics 
 - **Colors**: zones can be defined with custom colors that will be displayed throughout the colored terminal output if said color finds a match in a predefined ANSI dictionary. Otherwise, the color will simply default to the terminal's.
 
 ### How it works
-To put it simply, the program reads and parses a map file fed to it through the shell command line, plans a route for every drone in the fleet, checks the drafted plan against the set of movement constraints with an independent simulation, and then prints the movements turn by turn. An optional colored display shoes the state progression of every zone after each turn throughout the simulation. A graphical visualization has also been implemented and can be toggled on or off through the command line.
+To put it simply, the program reads and parses a map file fed to it through the shell command line, plans a route for every drone in the fleet, checks the drafted plan against the set of movement constraints with an independent simulation, and then prints the movements turn by turn inside a log file. An optional colored display shoes the state progression of every zone after each turn throughout the simulation. A graphical visualization has also been implemented and can be toggled on or off through the command line.
 
 ### The map file content
 The map file, aka the actual base of the network navigation for the fleet of drones, is one of the main foundations of this program's operation. The file is bonded by a set of strict rules regarding the format of its content, that make or break the file :
 - The first line of the file must be **nb_drones: number** with a number greater than 0.
 - A Zone declaration must look like : **hub: name x y [metadata]**. Metadatas are optional and the brackets should only be included if actual metadatas exist. This block, if it exists, must be the last element of its line and appear at most once.
+- Order matters in the map file: Zone declarations should preceed Connection declaration because, logically, said Zones are the components of Connections.
 - Zone metadatas might include, at most one time :
   - the Zone type, as **[zone=restricted/normal/priority]**. It defaults to normal if not specified.
   - the color : **[color=blue]**. Any one string word will be admitted.
@@ -235,6 +236,8 @@ By adding the `--visual` flag, it would also output the colored lines :
 
 ![colored terminal output](assets/colored_output_1.png)
 
+The user can also throw in the `--gui` command to display the graphical visualization of the simulation.
+
 
 ## Performance
 
@@ -260,7 +263,7 @@ The program was designed based on a set of map files provided at the start of th
 ## Complexity
 
 With V zones, E connections, D drones, and T the time limit:
-- PathFinder runs once in O((V + E) log V) time and O(V + E) memory.
+- PathFinder runs once in O((V + E) log V) time and O(V + E) memory. It is proportional to the number of connections and zones, and because it's Djikstra's, it runs on log(V), the size of the heap.
 - One drone's planning search explores at most V × T states, each with at most one option per connection plus waiting, so it takes O((V + E) · T · log(V · T)) time and O(V · T) memory.
 - The whole plan is D such searches. Since the schedule gets longer as drones are added, T grows with D, so the total cost grows faster than linearly in the number of drones, roughly with D².
 - The reservation table holds one entry per booked step: memory proportional to the total length of all routes.

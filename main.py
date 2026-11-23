@@ -6,7 +6,6 @@ from graph import Graph, PathFinder
 from simulation import SimulationError, Simulation
 from planner import Planner, PlanningError
 from terminal import TerminalColor
-from collections import Counter
 import argparse
 import os
 
@@ -35,10 +34,6 @@ def define_flag() -> argparse.Namespace:
         "--gui",
         action="store_true",
         help="Toggle the optional graphical user interface."
-    )
-    flags.add_argument(
-        "--detail",
-        action="store_true",
     )
     return flags.parse_args()
 
@@ -69,30 +64,20 @@ def main() -> None:
         display = TerminalColor()
 
         path = PathFinder(graph)
+
         test_path = path.find_path()
         if test_path is None:
             raise ValueError("No route found.")
         max_time = (len(test_path) + graph.nb_drones) * 2
         turns = planner.plan(max_time)
 
-        capture = simulation.snapshot()
-
         snapshots: list[dict[int, Zone | Connection]] = [
-            capture[0]]
-
-        count_zone_occ: list[dict[str, int]] = [capture[1]]
-        during_turn: list[Counter[str]] = [Counter()]
+            simulation.snapshot()]
 
         result = simulation.run(
-            visual, turns, display.display_status,
-            snapshots, count_zone_occ, during_turn)
-
+            visual, turns, display.display_status, snapshots)
         for line in result[1]:
             print(line)
-
-        if flags.detail:
-            simulation.occupancy(result[0], count_zone_occ, during_turn)
-
         if gui:
             os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
             from visual import GraphicalDisplay
