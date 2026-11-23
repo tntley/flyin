@@ -35,12 +35,12 @@ class Simulation:
         """Create the Simulation object."""
         self.turn: int = 0
         self.graph = graph
+        if self.graph.nb_drones > 1000:
+            raise SimulationError("Limit fleet size at 1000 drones.")
         self.drones: dict[int, Drone] = {
             i: Drone(i, self.graph.start, self.graph.end)
             for i in range(1, self.graph.nb_drones + 1)
         }
-        if len(self.drones) > 1000:
-            raise SimulationError("Limit fleet size at 1000 drones.")
 
     @property
     def all_delivered(self) -> bool:
@@ -108,7 +108,7 @@ class Simulation:
     def _check_connection_capacity(
             self,
             planned: list[tuple[Drone, Connection, Zone]]
-    ) -> Counter[str]:
+    ) -> None:
         """Check if a connection would exceed its capacity on a turn."""
         passage: Counter[str] = Counter()
         links: dict[str, Connection] = {}
@@ -120,7 +120,6 @@ class Simulation:
             if count > links[connection_name].capacity:
                 raise SimulationError(
                     f"{connection_name} has exceeded the allowed quota")
-        return passage
 
     def _apply(
             self,
@@ -157,25 +156,21 @@ class Simulation:
         pairs.sort()
         return " ".join(f"D{drone_id}-{name}" for drone_id, name in pairs)
 
-    def snapshot(
-            self
-    ) -> tuple[dict[int, Zone | Connection], dict[str, int]]:
+    def snapshot(self) -> dict[int, Zone | Connection]:
         """Return each drone's current location."""
         result: dict[int, Zone | Connection] = {}
-        count_zone_occ: Counter[str] = Counter()
         for id, drone in self.drones.items():
             if isinstance(drone.location, Transit):
                 result[id] = drone.location.connection
             else:
                 result[id] = drone.location
-                count_zone_occ[drone.location.name] += 1
-        return (result, count_zone_occ)
+        return result
 
-    def step(self, moves: dict[int, Connection], during_turn: list[Counter[str]]) -> str:
+    def step(self, moves: dict[int, Connection]) -> str:
         """Check moves legality, zone and connection capacity on one turn."""
         planned = self._check_moves(moves)
         self._check_zone_capacity(planned)
-        during_turn.append(self._check_connection_capacity(planned))
+        self._check_connection_capacity(planned)
         result = self._apply(planned)
         self.turn += 1
         return result
@@ -185,9 +180,7 @@ class Simulation:
             visual: bool,
             moves_per_turn: list[dict[int, Connection]],
             display: Callable[["Simulation"], None],
-            snapshots: list[dict[int, Zone | Connection]],
-            count_zone_occ: list[dict[str, int]],
-            during_turn: list[Counter[str]]
+            snapshots: list[dict[int, Zone | Connection]]
     ) -> tuple[int, list[str]]:
         """Play a whole plan and check if all drones are delivered.
 
@@ -214,10 +207,8 @@ class Simulation:
             display(self)
             print(file=sys.stderr)
         for turn in moves_per_turn:
-            this_turn = self.step(turn, during_turn)
-            capture = self.snapshot()
-            snapshots.append(capture[0])
-            count_zone_occ.append(capture[1])
+            this_turn = self.step(turn)
+            snapshots.append(self.snapshot())
             result.append(this_turn)
             if visual:
                 print(f"Turn {self.turn}: {this_turn}", file=sys.stderr)
@@ -226,23 +217,3 @@ class Simulation:
         if not self.all_delivered:
             raise SimulationError("Some drones were not delivered")
         return (self.turn, result)
-
-    def occupancy(
-            self,
-            number_turn: int,
-            zone_occ: list[dict[str, int]],
-            during_turn: list[Counter[str]]
-    ) -> None:
-        """Display simple occupancy stats per turn on stdout."""
-        print("\nOccupancy per turn:")
-        for i in range(0, number_turn + 1):
-            print(f"\nTurn {i}:")
-            print("\t\tConnections during the turn:")
-            for connection in self.graph.connections:
-                print(f"\t* {connection.name}: "
-                      f"{during_turn[i][connection.name]}/"
-                      f"{connection.capacity}")
-            print("\t\tLocation at end of this turn:")
-            for zone_name, zone in self.graph.zones.items():
-                print(f"\t- {zone_name}: {zone_occ[i][zone_name]}/"
-                      f"{zone.capacity}")

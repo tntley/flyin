@@ -10,37 +10,27 @@ import argparse
 import os
 
 
-def define_flag() -> argparse.Namespace:
-    """Check for mandatory argument and optional flag.
-
-    Returns
-    -------
-    argparse.Namespace
-        A Namespace object containing the passed arguments.
-    """
-    flags = argparse.ArgumentParser(
+def main() -> None:
+    """Run the program from graph creation to simulation."""
+    param = argparse.ArgumentParser(
         description="Pathfinding for drones with constraints."
     )
-    flags.add_argument(
+    param.add_argument(
         "map_file",
         help="Pathway to the map file to run."
     )
-    flags.add_argument(
+    param.add_argument(
         "--visual",
         action="store_true",
         help="Toggle the optional colored terminal output"
     )
-    flags.add_argument(
+    param.add_argument(
         "--gui",
         action="store_true",
         help="Toggle the optional graphical user interface."
     )
-    return flags.parse_args()
-
-
-def main() -> None:
-    """Run the program from graph creation to simulation."""
-    flags = define_flag()
+    flags = param.parse_args()
+    
     visual: bool = flags.visual
     gui: bool = flags.gui
     map_file: str = flags.map_file
