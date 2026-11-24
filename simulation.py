@@ -208,7 +208,8 @@ class Simulation:
             print(file=sys.stderr)
         for turn in moves_per_turn:
             this_turn = self.step(turn)
-            snapshots.append(self.snapshot())
+            capture = self.snapshot()
+            snapshots.append(capture)
             result.append(this_turn)
             if visual:
                 print(f"Turn {self.turn}: {this_turn}", file=sys.stderr)

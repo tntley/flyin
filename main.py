@@ -30,7 +30,7 @@ def main() -> None:
         help="Toggle the optional graphical user interface."
     )
     flags = param.parse_args()
-    
+
     visual: bool = flags.visual
     gui: bool = flags.gui
     map_file: str = flags.map_file
@@ -61,8 +61,9 @@ def main() -> None:
         max_time = (len(test_path) + graph.nb_drones) * 2
         turns = planner.plan(max_time)
 
-        snapshots: list[dict[int, Zone | Connection]] = [
-            simulation.snapshot()]
+        capture: dict[int, Zone | Connection] = simulation.snapshot()
+
+        snapshots: list[dict[int, Zone | Connection]] = [capture]
 
         result = simulation.run(
             visual, turns, display.display_status, snapshots)
