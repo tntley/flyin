@@ -8,16 +8,6 @@ Location = Zone | Connection
 Snapshot = dict[int, Location]
 Point = tuple[float, float]
 
-BACKGROUND = (25, 25, 35)
-LINE = (200, 200, 200)
-TEXT = (235, 235, 235)
-CAPACITY = (50, 90, 200)
-DEFAULT_ZONE = (128, 128, 128)
-PRIORITY = (34, 139, 34)
-RESTRICTED = (255, 165, 0)
-BLOCKED = (255, 0, 0)
-DRONE = (255, 192, 203)
-
 
 class GraphicalDisplay:
     """Window displaying recorded snapshots of the drones at each turn.
@@ -29,6 +19,16 @@ class GraphicalDisplay:
     snapshots: list[Snapshot]
         Each drones location after 0, 1, 2... turns
     """
+
+    BACKGROUND = (25, 25, 35)
+    LINE = (200, 200, 200)
+    TEXT = (235, 235, 235)
+    CAPACITY = (50, 90, 200)
+    DEFAULT_ZONE = (128, 128, 128)
+    PRIORITY = (34, 139, 34)
+    RESTRICTED = (255, 165, 0)
+    BLOCKED = (255, 0, 0)
+    DRONE = (255, 192, 203)
 
     MARGIN = 80
     ZONE_RADIUS = 20
@@ -89,15 +89,14 @@ class GraphicalDisplay:
             for zone in zones
         })
 
-    @staticmethod
-    def _extract_color(name: str | None) -> pygame.Color:
+    def _extract_color(self, name: str | None) -> pygame.Color:
         """Extract the actual color, defaulting to gray otherwise."""
         if name is None:
-            return pygame.Color(DEFAULT_ZONE)
+            return pygame.Color(self.DEFAULT_ZONE)
         try:
             return pygame.Color(name)
         except ValueError:
-            return pygame.Color(DEFAULT_ZONE)
+            return pygame.Color(self.DEFAULT_ZONE)
 
     def _load_drone_image(self, path: str) -> pygame.Surface | None:
         """Load drone image and resize it."""
@@ -150,9 +149,9 @@ class GraphicalDisplay:
         for link in self.graph.connections:
             start = self.zone_pos[link.zone_a.name]
             end = self.zone_pos[link.zone_b.name]
-            pygame.draw.line(self.screen, LINE, start, end, 3)
+            pygame.draw.line(self.screen, self.LINE, start, end, 3)
             capacity_label = self.font.render(
-                str(link.capacity), True, CAPACITY)
+                str(link.capacity), True, self.CAPACITY)
             midpoint = ((start[0] + end[0])/2, (start[1] + end[1])/2)
             self.screen.blit(
                 capacity_label,
@@ -172,7 +171,7 @@ class GraphicalDisplay:
             if zone.is_priority:
                 pygame.draw.circle(
                     self.screen,
-                    PRIORITY,
+                    self.PRIORITY,
                     center,
                     self.ZONE_RADIUS + 10,
                     5
@@ -180,7 +179,7 @@ class GraphicalDisplay:
             if zone.type is ZoneType.RESTRICTED:
                 pygame.draw.circle(
                     self.screen,
-                    RESTRICTED,
+                    self.RESTRICTED,
                     center,
                     self.ZONE_RADIUS + 10,
                     5
@@ -188,12 +187,12 @@ class GraphicalDisplay:
             if zone.type is ZoneType.BLOCKED:
                 pygame.draw.circle(
                     self.screen,
-                    BLOCKED,
+                    self.BLOCKED,
                     center,
                     self.ZONE_RADIUS + 10,
                     5
                 )
-            label = self.font.render(name, True, TEXT)
+            label = self.font.render(name, True, self.TEXT)
             self.screen.blit(
                 label, label.get_rect(midtop=(
                     center[0],
@@ -218,7 +217,7 @@ class GraphicalDisplay:
             else:
                 rect = pygame.Rect(0, 0, 10, 10)
                 rect.center = center
-                pygame.draw.rect(self.screen, DRONE, rect)
+                pygame.draw.rect(self.screen, self.DRONE, rect)
 
     def _draw_frame(
             self, turn: int, next_turn: int, progress: float, paused: bool
@@ -234,7 +233,7 @@ class GraphicalDisplay:
         last = len(self.snapshots) - 1
         status = f"Turn {turn}/{last}" + (" (PAUSED)" if paused else "")
         self.screen.blit(
-            self.font.render(status, True, TEXT),
+            self.font.render(status, True, self.TEXT),
             (700, 15)
         )
         pygame.display.flip()
