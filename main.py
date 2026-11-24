@@ -7,6 +7,7 @@ from simulation import SimulationError, Simulation
 from planner import Planner, PlanningError
 from terminal import TerminalColor
 import argparse
+from collections import Counter
 import os
 
 
@@ -35,6 +36,10 @@ class EntryPoint:
             "--gui",
             action="store_true",
             help="Toggle the optional graphical user interface."
+        )
+        param.add_argument(
+            "--capacity-info",
+            action="store_true"
         )
         flags = param.parse_args()
         return flags
@@ -73,10 +78,13 @@ class EntryPoint:
 
             capture: dict[int, Zone | Connection] = simulation.snapshot()
 
-            snapshots: list[dict[int, Zone | Connection]] = [capture]
+            snapshots: list[dict[int, Zone | Connection]] = [capture[0]]
+
+            countzone: list[Counter[str]] = [capture[1]]
+            countlink: list[Counter[str]] = [Counter()]
 
             result = simulation.run(
-                visual, turns, display.display_status, snapshots)
+                visual, turns, display.display_status, snapshots, countzone, countlink)
             for line in result[1]:
                 print(line)
             if gui:
@@ -84,6 +92,8 @@ class EntryPoint:
                 from visual import GraphicalDisplay
                 graphic = GraphicalDisplay(graph, snapshots)
                 graphic.run()
+            if self._args.capacity_info:
+                simulation.info(result[0], countzone, countlink)
         except OSError as o:
             print(f"Unable to read map file: {o}", file=sys.stderr)
             sys.exit(1)

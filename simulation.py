@@ -108,7 +108,7 @@ class Simulation:
     def _check_connection_capacity(
             self,
             planned: list[tuple[Drone, Connection, Zone]]
-    ) -> None:
+    ) -> Counter[str]:
         """Check if a connection would exceed its capacity on a turn."""
         passage: Counter[str] = Counter()
         links: dict[str, Connection] = {}
@@ -120,6 +120,7 @@ class Simulation:
             if count > links[connection_name].capacity:
                 raise SimulationError(
                     f"{connection_name} has exceeded the allowed quota")
+        return passage
 
     def _apply(
             self,
@@ -156,21 +157,23 @@ class Simulation:
         pairs.sort()
         return " ".join(f"D{drone_id}-{name}" for drone_id, name in pairs)
 
-    def snapshot(self) -> dict[int, Zone | Connection]:
+    def snapshot(self) -> tuple[dict[int, Zone | Connection], Counter[str]]:
         """Return each drone's current location."""
         result: dict[int, Zone | Connection] = {}
+        countzone: Counter[str] = Counter()
         for id, drone in self.drones.items():
             if isinstance(drone.location, Transit):
                 result[id] = drone.location.connection
             else:
                 result[id] = drone.location
-        return result
+                countzone[drone.location.name] += 1
+        return (result, countzone)
 
-    def step(self, moves: dict[int, Connection]) -> str:
+    def step(self, moves: dict[int, Connection], countlink: list[Counter[str]]) -> str:
         """Check moves legality, zone and connection capacity on one turn."""
         planned = self._check_moves(moves)
         self._check_zone_capacity(planned)
-        self._check_connection_capacity(planned)
+        countlink.append(self._check_connection_capacity(planned))
         result = self._apply(planned)
         self.turn += 1
         return result
@@ -180,7 +183,9 @@ class Simulation:
             visual: bool,
             moves_per_turn: list[dict[int, Connection]],
             display: Callable[["Simulation"], None],
-            snapshots: list[dict[int, Zone | Connection]]
+            snapshots: list[dict[int, Zone | Connection]],
+            countzone: list[Counter[str]],
+            countlink: list[Counter[str]]
     ) -> tuple[int, list[str]]:
         """Play a whole plan and check if all drones are delivered.
 
@@ -207,9 +212,10 @@ class Simulation:
             display(self)
             print(file=sys.stderr)
         for turn in moves_per_turn:
-            this_turn = self.step(turn)
+            this_turn = self.step(turn, countlink)
             capture = self.snapshot()
-            snapshots.append(capture)
+            snapshots.append(capture[0])
+            countzone.append(capture[1])
             result.append(this_turn)
             if visual:
                 print(f"Turn {self.turn}: {this_turn}", file=sys.stderr)
@@ -218,3 +224,18 @@ class Simulation:
         if not self.all_delivered:
             raise SimulationError("Some drones were not delivered")
         return (self.turn, result)
+
+    def info(
+            self,
+            turn: int,
+            countzone: list[Counter[str]],
+            countlink: list[Counter[str]]
+    ) -> None:
+        for i in range(0, turn + 1):
+            print(f"\nTurn {i}:")
+            print("\tZones after the turn:")
+            for name, zone in self.graph.zones.items():
+                print(f"- {name}: {countzone[i][name]}/{zone.capacity}")
+            print("\tConnections during the turn:")
+            for connection in self.graph.connections:
+                print(f"- {connection.name}: {countlink[i][connection.name]}/{connection.capacity}")
